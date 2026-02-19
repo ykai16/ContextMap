@@ -73,21 +73,26 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     script -q "$ABS_LOG_FILE" /bin/bash -c "$CMD_STRING"
 else
     # Linux / Standard (util-linux)
-    # Re-assemble command string
-    CMD_STRING="$REAL_CLAUDE"
-    for arg in "$@"; do
-        CMD_STRING="$CMD_STRING \"$arg\""
-    done
     
-    # The -c flag expects a single string argument for the command
-    # And -e returns the exit code of the child
-    # CRITICAL FIX for Linux: 
-    # 'script -c cmd' sometimes exits immediately if 'cmd' is not a shell.
-    # We force a shell context using 'bash -c' or 'sh -c' to ensure interactive behavior if needed.
-    # But usually 'script -c' works. The issue might be finding the binary or TTY allocation.
-    # Let's try explicit shell wrapping on Linux too, which is safer.
+    # 1. Print Debug Info (so user knows what's happening)
+    echo "🔍 Debug: Launching '$REAL_CLAUDE' via script..."
     
-    script -e -q -c "/bin/bash -c '$CMD_STRING'" "$ABS_LOG_FILE"
+    # 2. Construct command string safely
+    # We use $* to join all arguments into a single string
+    FULL_CMD="$REAL_CLAUDE $*"
+    
+    # 3. Run script
+    # We remove -q and -e to maximize compatibility with older 'script' versions
+    # We rely on standard behavior: script -c "command" logfile
+    
+    script -c "$FULL_CMD" "$ABS_LOG_FILE"
+    
+    # Capture exit code of script (which captures exit code of claude)
+    RET_CODE=$?
+    
+    if [ $RET_CODE -ne 0 ]; then
+        echo "⚠️  Claude exited with code $RET_CODE"
+    fi
 fi
 
 EXIT_CODE=$?
