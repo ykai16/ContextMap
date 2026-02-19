@@ -3,7 +3,9 @@
 # Configuration
 CONTEXT_DIR=".context"
 SUMMARY_FILE="$CONTEXT_DIR/session_summary.md"
-LOG_FILE="$CONTEXT_DIR/last_session_raw.log"
+# Timestamped log file for archiving
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+LOG_FILE="$CONTEXT_DIR/logs/session_$TIMESTAMP.log"
 CARTOGRAPHER_SCRIPT="$(dirname "$0")/contextmap.py"
 
 # Colors
@@ -12,8 +14,8 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Ensure context dir exists
-mkdir -p "$CONTEXT_DIR"
+# Ensure context and logs dir exists
+mkdir -p "$CONTEXT_DIR/logs"
 
 # --- Phase 1: Pre-flight Check (Resume Context) ---
 echo -e "${CYAN}🦉 ContextMap active.${NC}"

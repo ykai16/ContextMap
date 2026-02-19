@@ -75,22 +75,25 @@ def parse_transcript(log_path: str) -> str:
     except Exception as e:
         return f"[Error reading log: {str(e)}]"
 
-def generate_summary(transcript: str, model: str = None) -> str:
+def generate_summary(transcript: str, old_summary: str = "", model: str = None) -> str:
     """Uses Claude Code (CLI) itself to summarize the log via subprocess."""
     
     system_prompt = """
-    You are 'ContextMap'. Analyze the attached session transcript.
-    Output a Markdown report with:
-    1. # 🗺️ Session Evolution (Mermaid Graph)
-    2. # 📝 Key Decisions Log (Table)
-    3. # 🧠 Context Anchor (Summary for next session)
-    4. # 🚧 Left Hanging (Next steps)
+    You are 'ContextMap'. Analyze the provided 'Previous Session Context' and 'Current Session Transcript'.
     
-    Keep it concise. Use the transcript provided below.
+    Your goal is to UPDATE the project map. Do not just summarize the new log; integrate it into the existing history.
+    
+    Output a Markdown report with:
+    1. # 🗺️ Session Evolution (Mermaid Graph) -> Grow this graph. Add new nodes for today's work.
+    2. # 📝 Key Decisions Log (Table) -> Append new decisions.
+    3. # 🧠 Context Anchor -> Update this to reflect the CURRENT status after recent changes.
+    4. # 🚧 Left Hanging -> Remove solved items, add new blockers.
+    
+    Keep it concise.
     """
     
     # We construct a prompt file to feed into Claude
-    prompt_content = f"{system_prompt}\n\nTRANSCRIPT:\n{transcript[-80000:]}" # Limit to 80k chars to be safe
+    prompt_content = f"{system_prompt}\n\n=== PREVIOUS SESSION CONTEXT ===\n{old_summary}\n\n=== CURRENT SESSION TRANSCRIPT ===\n{transcript[-80000:]}" 
     
     import tempfile
     import subprocess
@@ -142,12 +145,38 @@ def generate_summary(transcript: str, model: str = None) -> str:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
 
+def cleanup_old_logs(log_dir: str, days: int = 2):
+    """Deletes log files older than X days."""
+    if not os.path.exists(log_dir):
+        return
+        
+    cutoff = datetime.datetime.now().timestamp() - (days * 86400)
+    
+    count = 0
+    for f in os.listdir(log_dir):
+        if not f.endswith(".log"): continue
+        
+        path = os.path.join(log_dir, f)
+        if os.path.getmtime(path) < cutoff:
+            try:
+                os.remove(path)
+                count += 1
+            except OSError:
+                pass
+                
+    if count > 0:
+        print(f"🧹 Cleaned up {count} old log files (> {days} days).")
+
 def main():
     parser = argparse.ArgumentParser(description="ContextMap Analyzer")
     parser.add_argument("log_file", help="Path to the raw session log")
     parser.add_argument("--out", default=".context/session_summary.md", help="Output path for summary")
     parser.add_argument("--model", default=None, help="The model used in the session")
     args = parser.parse_args()
+
+    # 0. Cleanup Old Logs (Housekeeping)
+    log_dir = os.path.dirname(args.log_file)
+    cleanup_old_logs(log_dir)
 
     # 2. Parse & Analyze
     print("🧠 Analyzing session context...")
@@ -156,8 +185,17 @@ def main():
         print("⚠️  Empty transcript. Nothing to analyze.")
         return
 
+    # Load Previous Summary (Recursive Memory)
+    old_summary = ""
+    if os.path.exists(args.out):
+        try:
+            with open(args.out, 'r') as f:
+                old_summary = f.read()
+        except:
+            pass
+
     # Call summary generation (which now uses Claude CLI subprocess)
-    summary = generate_summary(transcript, model=args.model)
+    summary = generate_summary(transcript, old_summary=old_summary, model=args.model)
     
     # 3. Save
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
