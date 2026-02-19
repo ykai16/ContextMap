@@ -148,6 +148,11 @@ def generate_summary(transcript: str, old_summary: str = "", model: str = None) 
 def cleanup_old_logs(log_dir: str, days: int = 2):
     """Deletes log files older than X days."""
     if not os.path.exists(log_dir):
+        # Create directory if it doesn't exist (to avoid errors later)
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+        except OSError:
+            pass
         return
         
     cutoff = datetime.datetime.now().timestamp() - (days * 86400)
@@ -157,6 +162,9 @@ def cleanup_old_logs(log_dir: str, days: int = 2):
         if not f.endswith(".log"): continue
         
         path = os.path.join(log_dir, f)
+        # Check if file exists (it might be deleted concurrently)
+        if not os.path.exists(path): continue
+        
         if os.path.getmtime(path) < cutoff:
             try:
                 os.remove(path)
