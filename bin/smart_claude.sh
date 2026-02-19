@@ -35,13 +35,34 @@ fi
 # --- Phase 2: The Session (Recording) ---
 # We use 'script' to record everything. 
 # Linux uses 'script -c cmd log', MacOS uses 'script -q log cmd'
-# Detection logic:
+
+# Find real claude binary (ignoring aliases)
+# This is tricky because aliases aren't visible in scripts.
+# We assume standard install location or allow override via ENV.
+REAL_CLAUDE=${REAL_CLAUDE_PATH:-$(which -a claude 2>/dev/null | grep -v "smart_claude" | head -n 1)}
+
+# Fallback if which fails
+if [ -z "$REAL_CLAUDE" ]; then
+    # Try common paths
+    if [ -x "/usr/local/bin/claude" ]; then
+        REAL_CLAUDE="/usr/local/bin/claude"
+    elif [ -x "$HOME/.npm-global/bin/claude" ]; then
+        REAL_CLAUDE="$HOME/.npm-global/bin/claude"
+    else
+        echo -e "${YELLOW}⚠️  Could not auto-detect 'claude' binary path.${NC}"
+        echo "Please set REAL_CLAUDE_PATH in this script or environment."
+        # Fallback to direct call hoping for the best (might loop if alias isn't ignored)
+        REAL_CLAUDE="claude"
+    fi
+fi
+
+# Detection logic for 'script' command syntax
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # MacOS
-    script -q "$LOG_FILE" /usr/local/bin/claude "$@"
+    script -q "$LOG_FILE" "$REAL_CLAUDE" "$@"
 else
     # Linux / Standard
-    script -c "/usr/local/bin/claude $*" "$LOG_FILE"
+    script -c "$REAL_CLAUDE $*" "$LOG_FILE"
 fi
 
 EXIT_CODE=$?
