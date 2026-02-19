@@ -1,4 +1,4 @@
-# 🗺️ Context Cartographer for Claude Code
+# 🗺️ ContextMap for Claude Code
 
 **Stop "Context Rot".** This tool automatically maps your coding journey, summarizing your intents and decisions every time you close a session, and reloading your memory when you return.
 
@@ -7,8 +7,8 @@
 One-line install (assuming you have `git` and `python3`):
 
 ```bash
-git clone https://github.com/ykai16/context-cartographer.git
-cd context-cartographer
+git clone https://github.com/ykai16/ContextMap.git
+cd ContextMap
 ./install.sh
 ```
 
