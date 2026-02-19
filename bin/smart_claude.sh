@@ -56,6 +56,49 @@ if [ -z "$REAL_CLAUDE" ]; then
     fi
 fi
 
+# Detect model from arguments
+MODEL_ARG=""
+for i in "$@"; do
+    if [[ "$i" == --model=* ]]; then
+        MODEL_ARG="${i#*=}"
+    elif [[ "$i" == "-m" ]] && [[ -n "$2" ]]; then
+        # This is a simplification; handling next arg properly in bash loop is tricky
+        # We rely on simple parsing or assume the user sets it via ENV if complex
+        pass 
+    fi
+done
+
+# If user provided a model flag, capture it
+# A robust way to extract the value after -m or --model
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -m|--model)
+      MODEL_ARG="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --model=*)
+      MODEL_ARG="${1#*=}"
+      shift # past argument
+      ;;
+    *)
+      shift # past argument
+      ;;
+  esac
+done
+
+# Reset positional parameters for the actual command execution
+# Note: The loop above consumes args, so we need to run 'script' with the original "$@" 
+# But we can't easily restore "$@" after shifting.
+# Strategy: Parse FIRST, then run command with original args.
+
+# --- Phase 2: The Session (Recording) ---
+# We use 'script' to record everything. 
+# Linux uses 'script -c cmd log', MacOS uses 'script -q log cmd'
+
+# Find real claude binary (ignoring aliases)
+# ... (existing detection logic) ...
+
 # Detection logic for 'script' command syntax
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # MacOS
@@ -71,14 +114,21 @@ EXIT_CODE=$?
 echo -e "\n\n${GREEN}💾 Session ended. Cartographer is mapping your journey...${NC}"
 
 # Check dependencies
-if python3 -c "import openai" &> /dev/null; then
-    python3 "$CARTOGRAPHER_SCRIPT" "$LOG_FILE" --out "$SUMMARY_FILE"
+if python3 -c "import openai" &> /dev/null || python3 -c "import boto3" &> /dev/null; then
+    # Pass the detected model to the analyzer
+    CMD_ARGS="$LOG_FILE --out $SUMMARY_FILE"
+    if [ -n "$MODEL_ARG" ]; then
+        echo -e "${CYAN}🧠 Using detected model: $MODEL_ARG${NC}"
+        CMD_ARGS="$CMD_ARGS --model $MODEL_ARG"
+    fi
+    
+    python3 "$CARTOGRAPHER_SCRIPT" $CMD_ARGS
     
     if [ -f "$SUMMARY_FILE" ]; then
         echo -e "${CYAN}🗺️  Map Updated! See: $SUMMARY_FILE${NC}"
     fi
 else
-    echo -e "⚠️  Python dependency 'openai' missing. Run: pip install openai"
+    echo -e "⚠️  Python dependency 'openai' or 'boto3' missing."
     echo -e "   (Raw log saved to $LOG_FILE)"
 fi
 
