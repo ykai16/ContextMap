@@ -183,7 +183,8 @@ def main():
     args = parser.parse_args()
 
     # 0. Cleanup Old Logs (Housekeeping)
-    log_dir = os.path.dirname(args.log_file)
+    # Use dirname because log_file is a file path
+    log_dir = os.path.dirname(os.path.abspath(args.log_file))
     cleanup_old_logs(log_dir)
 
     # 2. Parse & Analyze
