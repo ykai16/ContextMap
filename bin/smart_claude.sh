@@ -114,22 +114,11 @@ EXIT_CODE=$?
 echo -e "\n\n${GREEN}💾 Session ended. Cartographer is mapping your journey...${NC}"
 
 # Check dependencies
-if python3 -c "import openai" &> /dev/null || python3 -c "import boto3" &> /dev/null; then
-    # Pass the detected model to the analyzer
-    CMD_ARGS="$LOG_FILE --out $SUMMARY_FILE"
-    if [ -n "$MODEL_ARG" ]; then
-        echo -e "${CYAN}🧠 Using detected model: $MODEL_ARG${NC}"
-        CMD_ARGS="$CMD_ARGS --model $MODEL_ARG"
-    fi
-    
-    python3 "$CARTOGRAPHER_SCRIPT" $CMD_ARGS
-    
-    if [ -f "$SUMMARY_FILE" ]; then
-        echo -e "${CYAN}🗺️  Map Updated! See: $SUMMARY_FILE${NC}"
-    fi
-else
-    echo -e "⚠️  Python dependency 'openai' or 'boto3' missing."
-    echo -e "   (Raw log saved to $LOG_FILE)"
+# We just need Python, no extra libs
+python3 "$CARTOGRAPHER_SCRIPT" $CMD_ARGS
+
+if [ -f "$SUMMARY_FILE" ]; then
+    echo -e "${CYAN}🗺️  Map Updated! See: $SUMMARY_FILE${NC}"
 fi
 
 exit $EXIT_CODE
