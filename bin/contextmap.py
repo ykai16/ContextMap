@@ -183,13 +183,22 @@ def main():
     args = parser.parse_args()
 
     # 0. Cleanup Old Logs (Housekeeping)
-    # Ensure we look in the directory of the log file provided
+    # ROBUST FIX: Explicitly resolve absolute path based on CWD
+    # We assume log_file is relative to CWD if not absolute
     try:
-        log_dir = os.path.dirname(args.log_file)
-        if log_dir: # Only if a directory component exists
+        if os.path.isabs(args.log_file):
+            log_path = args.log_file
+        else:
+            log_path = os.path.join(os.getcwd(), args.log_file)
+            
+        log_dir = os.path.dirname(log_path)
+        
+        # Only attempt cleanup if directory actually exists
+        if os.path.isdir(log_dir):
             cleanup_old_logs(log_dir)
     except Exception:
-        pass # Ignore errors in housekeeping
+        # Fail silently on cleanup to prioritize summary generation
+        pass
 
     # 2. Parse & Analyze
     print("🧠 Analyzing session context...")
