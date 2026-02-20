@@ -14,7 +14,7 @@ def main():
     project_root = os.path.dirname(bin_dir)
     context_dir = os.path.join(os.getcwd(), ".context")
     logs_dir = os.path.join(context_dir, "logs")
-    summary_file = os.path.join(context_dir, "session_summary.md")
+    summary_file = os.path.join(context_dir, "session_summary.html")
     
     # Ensure dirs exist
     os.makedirs(logs_dir, exist_ok=True)
@@ -59,11 +59,22 @@ def main():
         try:
             with open(summary_file, 'r') as f:
                 content = f.read()
-                if "# 🧠 Context Anchor" in content:
+                # Try to extract content from <section id="anchor">
+                if '<section id="anchor">' in content:
+                    anchor_part = content.split('<section id="anchor">')[1].split('</section>')[0]
+                    # Strip tags to get text
+                    import re
+                    clean_text = re.sub('<[^<]+?>', '', anchor_part).strip()
+                    print(clean_text[:800] + "..." if len(clean_text) > 800 else clean_text)
+                elif "# 🧠 Context Anchor" in content:
+                    # Legacy markdown support
                     anchor = content.split("# 🧠 Context Anchor")[1].split("#")[0].strip()
                     print(anchor[:500] + "..." if len(anchor) > 500 else anchor)
                 else:
-                    print(content[:200] + "...")
+                    # Fallback for simple HTML or Markdown
+                    import re
+                    clean_text = re.sub('<[^<]+?>', '', content).strip()
+                    print(clean_text[:200] + "...")
         except Exception:
             pass
         print("---------------------------------------------------\n")
