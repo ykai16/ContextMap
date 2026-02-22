@@ -130,21 +130,17 @@ The report is **100% self-contained** — no external dependencies, CDNs, or int
 
 ## ⚙️ Configuration
 
-### API Key
+### Zero Config Required
 
-Set your LLM API key in your shell profile:
+ContextMap uses the **`claude` CLI directly** for session analysis — the same Claude Code you already have installed and authenticated. No separate API key is needed.
 
-```bash
-# In your ~/.zshrc or ~/.bashrc
-export OPENAI_API_KEY="sk-..."
-```
+> ✅ **If Claude Code works, ContextMap works.** It inherits your existing Claude Code authentication automatically.
 
-### Environment Variables
+### Environment Variables (Optional)
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `OPENAI_API_KEY` | API key for the LLM used in analysis | *required* |
-| `REAL_CLAUDE_PATH` | Path to the actual `claude` binary | auto-detected |
+| `REAL_CLAUDE_PATH` | Override path to the `claude` binary (useful if you have multiple installations) | auto-detected |
 
 ### File Structure
 
