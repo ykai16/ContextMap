@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/banner.png" alt="ContextMap Banner" width="600" />
+  <img src=".github/banner.png" alt="ContextMap Banner" width="100%" />
 </p>
 
 <p align="center">
