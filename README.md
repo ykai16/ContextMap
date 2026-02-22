@@ -17,8 +17,8 @@
 <p align="center">
   <a href="#-quick-start">Quick Start</a> · 
   <a href="#-how-it-works">How It Works</a> · 
-  <a href="#-output-example">Example</a> · 
-  <a href="#-configuration">Configuration</a> · 
+  <a href="#%EF%B8%8F-output-example">Example</a> · 
+  <a href="#%EF%B8%8F-configuration">Configuration</a> · 
   <a href="#-contributing">Contributing</a>
 </p>
 
@@ -126,7 +126,7 @@ ContextMap generates a polished HTML file at `.context/session_summary.html` in 
 
 The report is **100% self-contained** — no external dependencies, CDNs, or internet required. Just open it in your browser.
 
-> 💡 **Tip:** Check out [`examples/example_report.html`](examples/example_report.html) to see a full sample report.
+> 💡 **Tip:** Check out the [**live example report**](https://htmlpreview.github.io/?https://github.com/ykai16/ContextMap/blob/master/examples/example_report.html) to see a full sample — or download [`examples/example_report.html`](examples/example_report.html) and open it locally.
 
 ## ⚙️ Configuration
 
@@ -208,7 +208,7 @@ python3 -c "import py_compile; py_compile.compile('bin/contextmap.py', doraise=T
 
 ## 📄 License
 
-Copyright © 2026 [Yancy](https://github.com/ykai16). Licensed under the [MIT License](LICENSE).
+Copyright © 2026 [Yan Kai](https://github.com/ykai16). Licensed under the [MIT License](LICENSE).
 
 ---
 
