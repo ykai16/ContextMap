@@ -126,7 +126,7 @@ ContextMap generates a polished HTML file at `.context/session_summary.html` in 
 
 The report is **100% self-contained** — no external dependencies, CDNs, or internet required. Just open it in your browser.
 
-> 💡 **Tip:** Check out the [**live example report**](https://htmlpreview.github.io/?https://github.com/ykai16/ContextMap/blob/master/examples/example_report.html) to see a full sample — or download [`examples/example_report.html`](examples/example_report.html) and open it locally.
+> 💡 **Tip:** Check out the [**live example report**](https://raw.githack.com/ykai16/ContextMap/master/examples/example_report.html) to see a full sample — or download [`examples/example_report.html`](examples/example_report.html) and open it locally.
 
 ## ⚙️ Configuration
 
