@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ContextMap — Project Evolution</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #1a1a1a;
+      --bg-elevated: #222222;
+      --surface: #2a2a2a;
+      --surface-border: rgba(255, 255, 255, 0.07);
+      --text-primary: #e8e4df;
+      --text-secondary: #a09a92;
+      --text-muted: #6b6560;
+      --accent: #d4a27f;
+      --accent-dim: rgba(212, 162, 127, 0.12);
+      --accent-border: rgba(212, 162, 127, 0.2);
+      --success: #6ec89b;
+      --success-dim: rgba(110, 200, 155, 0.12);
+      --warning: #e0b861;
+      --warning-dim: rgba(224, 184, 97, 0.12);
+      --error: #e07a6e;
+      --error-dim: rgba(224, 122, 110, 0.12);
+      --info: #7aade0;
+      --info-dim: rgba(122, 173, 224, 0.12);
+      --radius: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+
+    /* ─── Typography ─── */
+    .serif {
+      font-family: Georgia, "Times New Roman", "Noto Serif", serif;
+    }
+
+    /* ─── Header ─── */
+    header {
+      padding: 56px 0 40px;
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .logo {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 36px;
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .header-sub {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-top: 6px;
+      font-weight: 400;
+    }
+
+    .meta-bar {
+      display: flex;
+      gap: 20px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .meta-pill {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: var(--surface);
+      padding: 4px 12px;
+      border-radius: 100px;
+      border: 1px solid var(--surface-border);
+    }
+
+    /* ─── Sections ─── */
+    section {
+      margin-top: 48px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.8px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+
+    /* ─── Card ─── */
+    .card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+    }
+
+    /* ─── Narrative (bullet style) ─── */
+    .narrative-session {
+      margin-bottom: 20px;
+    }
+
+    .narrative-session:last-child {
+      margin-bottom: 0;
+    }
+
+    .narrative-session-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .narrative-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .narrative-list li {
+      position: relative;
+      padding: 4px 0 4px 22px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .narrative-list li::before {
+      content: "•";
+      position: absolute;
+      left: 4px;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    /* ─── Anchor (icon-rich) ─── */
+    .anchor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .anchor-item {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border-radius: 8px;
+      border: 1px solid var(--surface-border);
+    }
+
+    .anchor-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      width: 28px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .anchor-content {}
+
+    .anchor-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .anchor-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .anchor-item.full-width {
+      grid-column: 1 / -1;
+    }
+
+    /* ─── Timeline ─── */
+    .timeline {
+      position: relative;
+      padding-left: 28px;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      bottom: 8px;
+      width: 1px;
+      background: var(--surface-border);
+    }
+
+    .session-divider {
+      position: relative;
+      margin: 28px 0 20px -28px;
+      padding-left: 28px;
+    }
+
+    .session-divider-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      background: var(--bg);
+      display: inline-block;
+      padding-right: 12px;
+    }
+
+    .session-divider::after {
+      content: "";
+      position: absolute;
+      left: 28px;
+      right: 0;
+      top: 50%;
+      height: 1px;
+      background: var(--accent-border);
+      z-index: 0;
+    }
+
+    .session-divider-label {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Step card */
+    .step-card {
+      position: relative;
+      margin-bottom: 8px;
+      cursor: pointer;
+      background: var(--bg-elevated);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      transition: border-color 0.2s ease;
+    }
+
+    .step-card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .step-dot {
+      position: absolute;
+      left: -23px;
+      top: 26px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      z-index: 2;
+    }
+
+    .step-dot.success {
+      background: var(--success);
+    }
+
+    .step-dot.partial {
+      background: var(--warning);
+    }
+
+    .step-dot.failed {
+      background: var(--error);
+    }
+
+    .step-dot.in_progress {
+      background: var(--info);
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .step-num {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .step-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-primary);
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 2px 8px;
+      border-radius: 100px;
+    }
+
+    .badge.success {
+      background: var(--success-dim);
+      color: var(--success);
+    }
+
+    .badge.partial {
+      background: var(--warning-dim);
+      color: var(--warning);
+    }
+
+    .badge.failed {
+      background: var(--error-dim);
+      color: var(--error);
+    }
+
+    .badge.in_progress {
+      background: var(--info-dim);
+      color: var(--info);
+    }
+
+    .step-preview {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .step-preview.hidden {
+      display: none;
+    }
+
+    .step-detail {
+      margin-top: 16px;
+      display: none;
+    }
+
+    .step-detail.open {
+      display: block;
+    }
+
+    .detail-section {
+      margin-bottom: 14px;
+    }
+
+    .detail-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .detail-heading {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .detail-bullets {
+      list-style: none;
+      padding: 0;
+    }
+
+    .detail-bullets li {
+      position: relative;
+      padding: 2px 0 2px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .detail-bullets li::before {
+      content: "–";
+      position: absolute;
+      left: 0;
+      color: var(--text-muted);
+    }
+
+    .artifacts-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 4px;
+    }
+
+    .artifact {
+      font-size: 11px;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+    }
+
+    /* Transition */
+    .transition {
+      margin: 4px 0 8px 0;
+      padding: 10px 16px;
+      border-left: 2px solid var(--accent-border);
+      margin-left: 4px;
+    }
+
+    .transition-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      line-height: 1.55;
+    }
+
+    .transition-text::before {
+      content: "↓ ";
+      color: var(--accent);
+    }
+
+    /* ─── Open Threads ─── */
+    .thread {
+      display: flex;
+      gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .thread:last-child {
+      border-bottom: none;
+    }
+
+    .thread-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+
+    .thread-body {
+      flex: 1;
+    }
+
+    .thread-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .thread-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .thread-next {
+      font-size: 12px;
+      color: var(--accent);
+      margin-top: 5px;
+    }
+
+    /* ─── Footer ─── */
+    footer {
+      margin-top: 64px;
+      padding: 24px 0;
+      border-top: 1px solid var(--surface-border);
+      text-align: center;
+    }
+
+    footer p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ─── Animations ─── */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .anim {
+      opacity: 0;
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    .d1 {
+      animation-delay: 0.05s;
+    }
+
+    .d2 {
+      animation-delay: 0.10s;
+    }
+
+    .d3 {
+      animation-delay: 0.15s;
+    }
+
+    .d4 {
+      animation-delay: 0.20s;
+    }
+
+    .d5 {
+      animation-delay: 0.25s;
+    }
+
+    .d6 {
+      animation-delay: 0.30s;
+    }
+
+    .d7 {
+      animation-delay: 0.35s;
+    }
+
+    .d8 {
+      animation-delay: 0.40s;
+    }
+
+    .d9 {
+      animation-delay: 0.45s;
+    }
+
+    .d10 {
+      animation-delay: 0.50s;
+    }
+
+    .d11 {
+      animation-delay: 0.55s;
+    }
+
+    .d12 {
+      animation-delay: 0.60s;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 640px) {
+      .container {
+        padding: 16px 16px 48px;
+      }
+
+      header {
+        padding: 32px 0 24px;
+      }
+
+      .logo {
+        font-size: 28px;
+      }
+
+      .anchor-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .step-card {
+        padding: 16px 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- ════════ HEADER ════════ -->
+    <header class="anim d1">
+      <div class="logo">Context<span>Map</span></div>
+      <div class="header-sub">fastapi-todo-app</div>
+      <div class="meta-bar">
+        <span class="meta-pill">📅 Updated Feb 21, 2026</span>
+        <span class="meta-pill">📂 2 sessions</span>
+        <span class="meta-pill">🔢 8 steps</span>
+      </div>
+    </header>
+
+    <!-- ════════ SESSION NARRATIVE ════════ -->
+    <section id="narrative" class="anim d2">
+      <div class="section-label">Session Narrative</div>
+      <div class="card">
+        <div class="narrative-session">
+          <div class="narrative-session-label">Session 2 · Feb 21</div>
+          <ul class="narrative-list">
+            <li>Fixed stale cache bug — PUT/DELETE operations were not invalidating Redis cache keys</li>
+            <li>Discovered and resolved N+1 query problem in <code>get_todos_with_tags()</code> by switching to
+              <code>joinedload()</code></li>
+            <li>Implemented cursor-based pagination for the todo list endpoint (chose over offset-based for scalability)
+            </li>
+            <li>Added 12 integration tests for pagination; caught an off-by-one error in cursor calculation</li>
+          </ul>
+        </div>
+        <div class="narrative-session">
+          <div class="narrative-session-label">Session 1 · Feb 20</div>
+          <ul class="narrative-list">
+            <li>Scaffolded FastAPI project with modular structure (routers, models, schemas, CRUD layers)</li>
+            <li>Implemented full CRUD endpoints for todos with proper error handling</li>
+            <li>Integrated Redis caching layer (partial — cache invalidation missing for PUT/DELETE)</li>
+            <li>Set up Docker Compose for one-command local development with PostgreSQL + Redis</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ CONTEXT ANCHOR ════════ -->
+    <section id="anchor" class="anim d3">
+      <div class="section-label">Where We Left Off</div>
+      <div class="anchor-grid">
+        <div class="anchor-item">
+          <div class="anchor-icon">📍</div>
+          <div class="anchor-content">
+            <div class="anchor-label">Last Working On</div>
+            <div class="anchor-text">Integration tests for cursor-based pagination in
+              <code>tests/test_pagination.py</code> — all 12 cases passing</div>
+          </div>
+        </div>
+        <div class="anchor-item">
+          <div class="anchor-icon">✅</div>
+          <div class="anchor-content">
+            <div class="anchor-label">Current State</div>
+            <div class="anchor-text">API fully functional: CRUD, Redis caching with proper invalidation, eager-loaded
+              queries, cursor-based pagination</div>
+          </div>
+        </div>
+        <div class="anchor-item">
+          <div class="anchor-icon">🔜</div>
+          <div class="anchor-content">
+            <div class="anchor-label">Next Up</div>
+            <div class="anchor-text">Add JWT-based user authentication for per-user todo isolation</div>
+          </div>
+        </div>
+        <div class="anchor-item">
+          <div class="anchor-icon">⚠️</div>
+          <div class="anchor-content">
+            <div class="anchor-label">Open Concern</div>
+            <div class="anchor-text">Redis pool size hardcoded to 10 in <code>config.py</code>; needs env var for
+              production</div>
+          </div>
+        </div>
+        <div class="anchor-item full-width">
+          <div class="anchor-icon">🧩</div>
+          <div class="anchor-content">
+            <div class="anchor-label">Key Decision</div>
+            <div class="anchor-text">Chose cursor-based pagination over offset-based — user expects dataset growth to
+              100k+ items, cursor approach gives O(1) performance at any page depth</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ EVOLUTION TIMELINE ════════ -->
+    <section id="timeline" class="anim d4">
+      <div class="section-label">Evolution Timeline</div>
+
+      <div class="timeline">
+
+        <!-- Session 2 -->
+        <div class="session-divider">
+          <span class="session-divider-label">Session 2 · Feb 21, 2026</span>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="step-card anim d5" onclick="toggle(this)">
+          <div class="step-dot success"></div>
+          <div class="step-header">
+            <span class="step-num">#5</span>
+            <span class="step-title">Fix stale cache on todo updates</span>
+            <span class="badge success">Success</span>
+          </div>
+          <div class="step-preview">Cache invalidation was only triggered on POST, not PUT/DELETE — causing stale reads
+          </div>
+          <div class="step-detail">
+            <div class="detail-section">
+              <div class="detail-heading">Intent</div>
+              <ul class="detail-bullets">
+                <li>GET /todos returning outdated data after updates — bug surfaced after Session 1's Redis integration
+                </li>
+                <li>Suspected only POST triggered <code>invalidate_cache()</code>; PUT and DELETE were serving stale
+                  cache</li>
+                <li>Needed to trace through <code>cache_manager.py</code> to confirm hypothesis and patch all write
+                  paths</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Expected</div>
+              <ul class="detail-bullets">
+                <li>All write operations (POST, PUT, DELETE) should invalidate relevant cache keys</li>
+                <li>GET requests should always return fresh data after any mutation</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Result</div>
+              <ul class="detail-bullets">
+                <li>Confirmed root cause: <code>invalidate_cache()</code> only called in <code>create_todo()</code></li>
+                <li>Added invalidation calls to <code>update_todo()</code> and <code>delete_todo()</code></li>
+                <li>Also added pattern-based invalidation via <code>SCAN</code> for <code>todos:*</code> keys</li>
+                <li>Verified manually — stale data issue resolved</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Artifacts</div>
+              <div class="artifacts-row">
+                <span class="artifact">routers/todos.py</span>
+                <span class="artifact">cache_manager.py</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="transition anim d5">
+          <span class="transition-text">Cache fix was correct, but a performance check revealed list queries had
+            degraded from ~50ms to ~200ms — something else was wrong</span>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="step-card anim d6" onclick="toggle(this)">
+          <div class="step-dot success"></div>
+          <div class="step-header">
+            <span class="step-num">#6</span>
+            <span class="step-title">Fix N+1 query in get_todos_with_tags()</span>
+            <span class="badge success">Success</span>
+          </div>
+          <div class="step-preview">Lazy-loading tags caused N+1 queries; switched to joinedload() — response time 200ms
+            → 40ms</div>
+          <div class="step-detail">
+            <div class="detail-section">
+              <div class="detail-heading">Intent</div>
+              <ul class="detail-bullets">
+                <li>After cache fix, benchmarks showed GET /todos taking ~200ms (was ~50ms), suggesting a pre-existing
+                  N+1 problem previously masked by aggressive caching</li>
+                <li>With cache invalidation now working correctly (more cache misses), the slow underlying queries were
+                  exposed</li>
+                <li>Needed to profile SQLAlchemy queries and identify the bottleneck</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Expected</div>
+              <ul class="detail-bullets">
+                <li>Replace lazy loading with eager loading (<code>joinedload()</code>) to reduce N+1 → single JOIN
+                  query</li>
+                <li>Response time should drop back under 60ms</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Result</div>
+              <ul class="detail-bullets">
+                <li>Confirmed N+1: each todo triggered a separate SELECT for tags (~50 queries for 50 todos)</li>
+                <li>Refactored to <code>joinedload(Todo.tags)</code> — one JOIN query, response time dropped to ~40ms
+                </li>
+                <li>Added <code>echo=True</code> SQL debug toggle in <code>database.py</code> (disabled by default)</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Artifacts</div>
+              <div class="artifacts-row">
+                <span class="artifact">crud/todos.py</span>
+                <span class="artifact">database.py</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="transition anim d6">
+          <span class="transition-text">With caching and query performance both resolved, shifted focus to a new
+            feature: pagination for scalability</span>
+        </div>
+
+        <!-- Step 7 -->
+        <div class="step-card anim d7" onclick="toggle(this)">
+          <div class="step-dot success"></div>
+          <div class="step-header">
+            <span class="step-num">#7</span>
+            <span class="step-title">Implement cursor-based pagination</span>
+            <span class="badge success">Success</span>
+          </div>
+          <div class="step-preview">Chose cursor-based over offset-based for O(1) performance at scale; added
+            PaginatedResponse schema</div>
+          <div class="step-detail">
+            <div class="detail-section">
+              <div class="detail-heading">Intent</div>
+              <ul class="detail-bullets">
+                <li>Dataset expected to grow to 100k+ items — needed pagination before that became a bottleneck</li>
+                <li>Chose cursor-based over offset-based: consistent results during mutations, O(1) at any page depth
+                </li>
+                <li>API should accept <code>cursor</code> + <code>limit</code> params, return <code>next_cursor</code> +
+                  <code>has_more</code></li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Expected</div>
+              <ul class="detail-bullets">
+                <li>GET /todos accepts optional cursor (int) and limit (default 20, max 100)</li>
+                <li>Response includes <code>next_cursor</code> and <code>has_more</code> for client-side pagination</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Result</div>
+              <ul class="detail-bullets">
+                <li>Implemented with <code>WHERE id > cursor ORDER BY id LIMIT limit+1</code> strategy</li>
+                <li>Created <code>PaginatedResponse</code> schema in <code>schemas/pagination.py</code></li>
+                <li>Updated cache key generation to include cursor + limit params</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Artifacts</div>
+              <div class="artifacts-row">
+                <span class="artifact">routers/todos.py</span>
+                <span class="artifact">crud/todos.py</span>
+                <span class="artifact">schemas/pagination.py</span>
+                <span class="artifact">cache_manager.py</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="transition anim d7">
+          <span class="transition-text">Pagination logic done — needed thorough testing, especially around boundary
+            conditions and the has_more flag</span>
+        </div>
+
+        <!-- Step 8 -->
+        <div class="step-card anim d8" onclick="toggle(this)">
+          <div class="step-dot success"></div>
+          <div class="step-header">
+            <span class="step-num">#8</span>
+            <span class="step-title">Add pagination integration tests</span>
+            <span class="badge success">Success</span>
+          </div>
+          <div class="step-preview">12 test cases covering all edge cases; caught off-by-one bug in cursor calculation
+          </div>
+          <div class="step-detail">
+            <div class="detail-section">
+              <div class="detail-heading">Intent</div>
+              <ul class="detail-bullets">
+                <li>Concerned about subtle edge cases: deleted item cursors, exact boundary when dataset size = limit,
+                  has_more correctness</li>
+                <li>Wanted comprehensive pytest suite with seeded test data and exact response assertions</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Expected</div>
+              <ul class="detail-bullets">
+                <li>10+ test scenarios: first/middle/last page, empty result, boundary conditions, concurrent
+                  modification</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Result</div>
+              <ul class="detail-bullets">
+                <li>Created 12 test cases in <code>tests/test_pagination.py</code></li>
+                <li>Caught off-by-one: code included the extra (limit+1th) item in response instead of discarding it
+                </li>
+                <li>Fixed slicing logic and <code>next_cursor</code> calculation in <code>crud/todos.py</code></li>
+                <li>All 12 tests passing — serves as regression safety net</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Artifacts</div>
+              <div class="artifacts-row">
+                <span class="artifact">tests/test_pagination.py</span>
+                <span class="artifact">crud/todos.py</span>
+                <span class="artifact">tests/conftest.py</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session 1 -->
+        <div class="session-divider" style="margin-top: 36px;">
+          <span class="session-divider-label">Session 1 · Feb 20, 2026</span>
+        </div>
+
+        <!-- Step 1 -->
+        <div class="step-card anim d9" onclick="toggle(this)">
+          <div class="step-dot success"></div>
+          <div class="step-header">
+            <span class="step-num">#1</span>
+            <span class="step-title">Initialize FastAPI project structure</span>
+            <span class="badge success">Success</span>
+          </div>
+          <div class="step-preview">Scaffolded modular FastAPI app with routers, models, schemas, CRUD layers + Alembic
+            migrations</div>
+          <div class="step-detail">
+            <div class="detail-section">
+              <div class="detail-heading">Intent</div>
+              <ul class="detail-bullets">
+                <li>Starting new todo API — wanted clean, production-ready structure from the beginning</li>
+                <li>Requested separate directories for routers, models, schemas, CRUD (following FastAPI "Bigger
+                  Applications" pattern)</li>
+                <li>Wanted Alembic for database migrations set up from day one</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Result</div>
+              <ul class="detail-bullets">
+                <li>Created full scaffold: <code>main.py</code>, <code>database.py</code>, <code>models/todo.py</code>
+                  (Todo + Tag with M2M), <code>schemas/todo.py</code>, <code>routers/todos.py</code></li>
+                <li>Initialized Alembic, configured <code>env.py</code>, generated and applied initial migration</li>
+                <li>App starts cleanly on uvicorn</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Artifacts</div>
+              <div class="artifacts-row">
+                <span class="artifact">main.py</span>
+                <span class="artifact">database.py</span>
+                <span class="artifact">models/todo.py</span>
+                <span class="artifact">schemas/todo.py</span>
+                <span class="artifact">routers/todos.py</span>
+                <span class="artifact">alembic/env.py</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="transition anim d9">
+          <span class="transition-text">Skeleton ready — moved on to implementing the actual CRUD business logic</span>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step-card anim d10" onclick="toggle(this)">
+          <div class="step-dot success"></div>
+          <div class="step-header">
+            <span class="step-num">#2</span>
+            <span class="step-title">Implement core CRUD endpoints</span>
+            <span class="badge success">Success</span>
+          </div>
+          <div class="step-preview">POST, GET, PUT, DELETE for todos with proper validation, error handling, and Swagger
+            docs</div>
+          <div class="step-detail">
+            <div class="detail-section">
+              <div class="detail-heading">Intent</div>
+              <ul class="detail-bullets">
+                <li>Scaffold done — needed actual CRUD operations wired to endpoints</li>
+                <li>Wanted proper 404 responses, Pydantic validation, and tag loading via
+                  <code>get_todos_with_tags()</code></li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Result</div>
+              <ul class="detail-bullets">
+                <li>All four CRUD operations working with proper HTTP status codes (201, 204, 404)</li>
+                <li>Swagger UI at <code>/docs</code> correctly documents all endpoints</li>
+                <li>Noted: tag loading uses lazy queries — potential N+1 issue deferred to later</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Artifacts</div>
+              <div class="artifacts-row">
+                <span class="artifact">crud/todos.py</span>
+                <span class="artifact">routers/todos.py</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="transition anim d10">
+          <span class="transition-text">CRUD layer working — wanted to add caching before the API sees real
+            traffic</span>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-card anim d11" onclick="toggle(this)">
+          <div class="step-dot partial"></div>
+          <div class="step-header">
+            <span class="step-num">#3</span>
+            <span class="step-title">Integrate Redis caching layer</span>
+            <span class="badge partial">Partial</span>
+          </div>
+          <div class="step-preview">CacheManager class added with connection pooling; but invalidation only wired for
+            POST, not PUT/DELETE</div>
+          <div class="step-detail">
+            <div class="detail-section">
+              <div class="detail-heading">Intent</div>
+              <ul class="detail-bullets">
+                <li>Optimize read-heavy workloads by caching GET /todos responses (TTL 60s)</li>
+                <li>Wanted clean abstraction — <code>CacheManager</code> class with <code>get()</code>,
+                  <code>set()</code>, <code>invalidate()</code></li>
+                <li>Redis connection pooling for efficiency</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Result</div>
+              <ul class="detail-bullets">
+                <li>Created <code>cache_manager.py</code> with pooled redis-py client</li>
+                <li>GET endpoint checks cache first — significant read speedup</li>
+                <li><strong>Bug:</strong> only added <code>invalidate_cache()</code> in <code>create_todo()</code>,
+                  missed PUT/DELETE — caught in Session 2</li>
+                <li>Pool size hardcoded to 10 — flagged as future config item</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Artifacts</div>
+              <div class="artifacts-row">
+                <span class="artifact">cache_manager.py</span>
+                <span class="artifact">routers/todos.py</span>
+                <span class="artifact">config.py</span>
+                <span class="artifact">requirements.txt</span>
+                <span class="artifact">docker-compose.yml</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="transition anim d11">
+          <span class="transition-text">Caching integrated — wanted to containerize everything for one-command
+            startup</span>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step-card anim d12" onclick="toggle(this)">
+          <div class="step-dot success"></div>
+          <div class="step-header">
+            <span class="step-num">#4</span>
+            <span class="step-title">Docker Compose setup for local dev</span>
+            <span class="badge success">Success</span>
+          </div>
+          <div class="step-preview">Three-service compose (app + PostgreSQL + Redis) with hot reload and auto-migrations
+            on startup</div>
+          <div class="step-detail">
+            <div class="detail-section">
+              <div class="detail-heading">Intent</div>
+              <ul class="detail-bullets">
+                <li>Project depends on PostgreSQL + Redis — manual setup too complex for collaborators</li>
+                <li>Wanted single <code>docker compose up</code> with hot-reload, persistent DB volume, and
+                  auto-migration on start</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Result</div>
+              <ul class="detail-bullets">
+                <li>Multi-stage Dockerfile, three-service compose, named volume for Postgres</li>
+                <li>Entrypoint script runs Alembic migrations before app start</li>
+                <li>API accessible at <code>localhost:8000</code> — everything starts cleanly</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Artifacts</div>
+              <div class="artifacts-row">
+                <span class="artifact">docker-compose.yml</span>
+                <span class="artifact">Dockerfile</span>
+                <span class="artifact">entrypoint.sh</span>
+                <span class="artifact">.env.example</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ════════ OPEN THREADS ════════ -->
+    <section id="threads" class="anim d12">
+      <div class="section-label">Open Threads</div>
+      <div class="card">
+        <div class="thread">
+          <div class="thread-icon">🔐</div>
+          <div class="thread-body">
+            <div class="thread-title">User Authentication (JWT)</div>
+            <div class="thread-desc">Per-user todo isolation requires JWT auth, User model, and foreign keys on Todo.
+            </div>
+            <div class="thread-next">→ Create User model, implement /auth endpoints, add JWT middleware</div>
+          </div>
+        </div>
+        <div class="thread">
+          <div class="thread-icon">⚙️</div>
+          <div class="thread-body">
+            <div class="thread-title">Redis Pool Size Config</div>
+            <div class="thread-desc">Hardcoded to 10 in config.py. Needs <code>REDIS_POOL_SIZE</code> env var for
+              production.</div>
+            <div class="thread-next">→ Add env var fallback in config.py, update .env.example</div>
+          </div>
+        </div>
+        <div class="thread">
+          <div class="thread-icon">🩺</div>
+          <div class="thread-body">
+            <div class="thread-title">Health Check Endpoint</div>
+            <div class="thread-desc">No /health endpoint yet. Needed for Docker/K8s liveness probes.</div>
+            <div class="thread-next">→ Add GET /health that pings both PostgreSQL and Redis</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>Generated by ContextMap · Feb 21, 2026</p>
+    </footer>
+
+  </div>
+
+  <script>
+    function toggle(card) {
+      var d = card.querySelector('.step-detail');
+      var p = card.querySelector('.step-preview');
+      if (!d) return;
+      var open = d.classList.contains('open');
+      d.classList.toggle('open', !open);
+      if (p) p.classList.toggle('hidden', !open);
+    }
+  </script>
+
+</body>
+
+</html>
