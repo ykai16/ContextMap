@@ -56,6 +56,15 @@
       font-family: Georgia, "Times New Roman", "Noto Serif", serif;
     }
 
+    code {
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 0.88em;
+      background: rgba(212, 162, 127, 0.08);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: var(--accent);
+    }
+
     /* ─── Header ─── */
     header {
       padding: 56px 0 40px;
@@ -188,8 +197,6 @@
       line-height: 1.4;
     }
 
-    .anchor-content {}
-
     .anchor-label {
       font-size: 11px;
       font-weight: 600;
@@ -240,6 +247,8 @@
       background: var(--bg);
       display: inline-block;
       padding-right: 12px;
+      position: relative;
+      z-index: 1;
     }
 
     .session-divider::after {
@@ -251,11 +260,6 @@
       height: 1px;
       background: var(--accent-border);
       z-index: 0;
-    }
-
-    .session-divider-label {
-      position: relative;
-      z-index: 1;
     }
 
     /* Step card */
@@ -355,8 +359,9 @@
       color: var(--text-muted);
       line-height: 1.5;
       display: -webkit-box;
-      -webkit-line-clamp: 1;
+      -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      line-clamp: 2;
       overflow: hidden;
     }
 
@@ -465,10 +470,6 @@
       padding-top: 1px;
     }
 
-    .thread-body {
-      flex: 1;
-    }
-
     .thread-title {
       font-size: 14px;
       font-weight: 600;
@@ -567,6 +568,14 @@
       animation-delay: 0.60s;
     }
 
+    .d13 {
+      animation-delay: 0.65s;
+    }
+
+    .d14 {
+      animation-delay: 0.70s;
+    }
+
     /* ─── Responsive ─── */
     @media (max-width: 640px) {
       .container {
@@ -599,11 +608,11 @@
     <!-- ════════ HEADER ════════ -->
     <header class="anim d1">
       <div class="logo">Context<span>Map</span></div>
-      <div class="header-sub">fastapi-todo-app</div>
+      <div class="header-sub">alphagenome-fm</div>
       <div class="meta-bar">
         <span class="meta-pill">📅 Updated Feb 21, 2026</span>
-        <span class="meta-pill">📂 2 sessions</span>
-        <span class="meta-pill">🔢 8 steps</span>
+        <span class="meta-pill">📂 3 sessions</span>
+        <span class="meta-pill">🔢 10 steps</span>
       </div>
     </header>
 
@@ -611,26 +620,40 @@
     <section id="narrative" class="anim d2">
       <div class="section-label">Session Narrative</div>
       <div class="card">
+
         <div class="narrative-session">
-          <div class="narrative-session-label">Session 2 · Feb 21</div>
+          <div class="narrative-session-label">Session 3 · Feb 21</div>
           <ul class="narrative-list">
-            <li>Fixed stale cache bug — PUT/DELETE operations were not invalidating Redis cache keys</li>
-            <li>Discovered and resolved N+1 query problem in <code>get_todos_with_tags()</code> by switching to
-              <code>joinedload()</code></li>
-            <li>Implemented cursor-based pagination for the todo list endpoint (chose over offset-based for scalability)
+            <li>Fine-tuned AlphaGenome on ClinVar pathogenicity prediction — AUROC 0.91 on held-out chr8</li>
+            <li>Investigated attention heads; discovered head 7 in layer 4 strongly tracks splice donor/acceptor motifs
             </li>
-            <li>Added 12 integration tests for pagination; caught an off-by-one error in cursor calculation</li>
+            <li>Implemented gradient-weighted attribution to visualize per-nucleotide importance scores</li>
           </ul>
         </div>
+
         <div class="narrative-session">
-          <div class="narrative-session-label">Session 1 · Feb 20</div>
+          <div class="narrative-session-label">Session 2 · Feb 20</div>
           <ul class="narrative-list">
-            <li>Scaffolded FastAPI project with modular structure (routers, models, schemas, CRUD layers)</li>
-            <li>Implemented full CRUD endpoints for todos with proper error handling</li>
-            <li>Integrated Redis caching layer (partial — cache invalidation missing for PUT/DELETE)</li>
-            <li>Set up Docker Compose for one-command local development with PostgreSQL + Redis</li>
+            <li>Resolved OOM during training by switching from full attention to FlashAttention-2 and gradient
+              checkpointing</li>
+            <li>Replaced naive 1-mer tokenization with BPE trained on hg38 — vocabulary of 4,096 tokens, ~3.2×
+              compression</li>
+            <li>Trained 150M-param model on chr1–chr7 for 50k steps; validated on chr8 with perplexity 4.21</li>
           </ul>
         </div>
+
+        <div class="narrative-session">
+          <div class="narrative-session-label">Session 1 · Feb 19</div>
+          <ul class="narrative-list">
+            <li>Scaffolded AlphaGenome project: data loaders for hg38 FASTA via <code>pysam</code>, configurable context
+              windows</li>
+            <li>Implemented initial Transformer encoder (6 layers, 512 hidden, 8 heads) with rotary positional
+              embeddings</li>
+            <li>Built masked language modeling (MLM) objective — 15% random nucleotide masking on 2 kb windows</li>
+            <li>First training run OOM'd on A100 at batch size 64 with 4 kb context — deferred to Session 2</li>
+          </ul>
+        </div>
+
       </div>
     </section>
 
@@ -640,41 +663,43 @@
       <div class="anchor-grid">
         <div class="anchor-item">
           <div class="anchor-icon">📍</div>
-          <div class="anchor-content">
+          <div>
             <div class="anchor-label">Last Working On</div>
-            <div class="anchor-text">Integration tests for cursor-based pagination in
-              <code>tests/test_pagination.py</code> — all 12 cases passing</div>
+            <div class="anchor-text">Gradient-weighted attribution maps in <code>interpret/attribution.py</code> —
+              visualizing per-nucleotide importance for ClinVar variant predictions</div>
           </div>
         </div>
         <div class="anchor-item">
           <div class="anchor-icon">✅</div>
-          <div class="anchor-content">
+          <div>
             <div class="anchor-label">Current State</div>
-            <div class="anchor-text">API fully functional: CRUD, Redis caching with proper invalidation, eager-loaded
-              queries, cursor-based pagination</div>
+            <div class="anchor-text">150M-param model pretrained (perplexity 4.21), fine-tuned on ClinVar pathogenicity
+              (AUROC 0.91 on chr8)</div>
           </div>
         </div>
         <div class="anchor-item">
           <div class="anchor-icon">🔜</div>
-          <div class="anchor-content">
+          <div>
             <div class="anchor-label">Next Up</div>
-            <div class="anchor-text">Add JWT-based user authentication for per-user todo isolation</div>
+            <div class="anchor-text">Benchmark against Enformer and Nucleotide Transformer on CADD score prediction;
+              evaluate on non-coding regulatory variants</div>
           </div>
         </div>
         <div class="anchor-item">
           <div class="anchor-icon">⚠️</div>
-          <div class="anchor-content">
+          <div>
             <div class="anchor-label">Open Concern</div>
-            <div class="anchor-text">Redis pool size hardcoded to 10 in <code>config.py</code>; needs env var for
-              production</div>
+            <div class="anchor-text">BPE tokenizer may split biologically meaningful motifs (TATA box, splice sites);
+              consider motif-aware tokenization</div>
           </div>
         </div>
         <div class="anchor-item full-width">
-          <div class="anchor-icon">🧩</div>
-          <div class="anchor-content">
+          <div class="anchor-icon">🧬</div>
+          <div>
             <div class="anchor-label">Key Decision</div>
-            <div class="anchor-text">Chose cursor-based pagination over offset-based — user expects dataset growth to
-              100k+ items, cursor approach gives O(1) performance at any page depth</div>
+            <div class="anchor-text">Chose BPE tokenization (4,096 vocab) over fixed k-mer — BPE learns biologically
+              adaptive token boundaries and achieves 3.2× compression over character-level, reducing effective sequence
+              length from 4,096 nt to ~1,280 tokens</div>
           </div>
         </div>
       </div>
@@ -686,393 +711,501 @@
 
       <div class="timeline">
 
-        <!-- Session 2 -->
+        <!-- ──── Session 3 ──── -->
         <div class="session-divider">
-          <span class="session-divider-label">Session 2 · Feb 21, 2026</span>
+          <span class="session-divider-label">Session 3 · Feb 21, 2026</span>
         </div>
 
-        <!-- Step 5 -->
+        <!-- Step 8 -->
         <div class="step-card anim d5" onclick="toggle(this)">
           <div class="step-dot success"></div>
           <div class="step-header">
-            <span class="step-num">#5</span>
-            <span class="step-title">Fix stale cache on todo updates</span>
+            <span class="step-num">#8</span>
+            <span class="step-title">Fine-tune on ClinVar pathogenicity</span>
             <span class="badge success">Success</span>
           </div>
-          <div class="step-preview">Cache invalidation was only triggered on POST, not PUT/DELETE — causing stale reads
-          </div>
+          <div class="step-preview">Added classification head on pretrained encoder; fine-tuned on ClinVar SNVs with
+            chr8 held out — AUROC 0.91</div>
           <div class="step-detail">
             <div class="detail-section">
               <div class="detail-heading">Intent</div>
               <ul class="detail-bullets">
-                <li>GET /todos returning outdated data after updates — bug surfaced after Session 1's Redis integration
-                </li>
-                <li>Suspected only POST triggered <code>invalidate_cache()</code>; PUT and DELETE were serving stale
-                  cache</li>
-                <li>Needed to trace through <code>cache_manager.py</code> to confirm hypothesis and patch all write
-                  paths</li>
+                <li>With pretraining converged, wanted to evaluate the model's learned representations on a real
+                  downstream task</li>
+                <li>Chose ClinVar pathogenicity classification as first benchmark — well-studied, clinically relevant,
+                  clear labels</li>
+                <li>Needed to build a fine-tuning pipeline: freeze encoder for first 5 epochs, then unfreeze with lower
+                  LR</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Expected</div>
               <ul class="detail-bullets">
-                <li>All write operations (POST, PUT, DELETE) should invalidate relevant cache keys</li>
-                <li>GET requests should always return fresh data after any mutation</li>
+                <li>Binary classification (pathogenic vs. benign) for single nucleotide variants</li>
+                <li>Target AUROC > 0.85 to be competitive with existing genomic language models</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Result</div>
               <ul class="detail-bullets">
-                <li>Confirmed root cause: <code>invalidate_cache()</code> only called in <code>create_todo()</code></li>
-                <li>Added invalidation calls to <code>update_todo()</code> and <code>delete_todo()</code></li>
-                <li>Also added pattern-based invalidation via <code>SCAN</code> for <code>todos:*</code> keys</li>
-                <li>Verified manually — stale data issue resolved</li>
+                <li>Created <code>tasks/clinvar.py</code> with a linear classification head on the [CLS]-equivalent
+                  embedding</li>
+                <li>Extracted ±1 kb flanking context for each variant from hg38; ref and alt sequences as paired inputs
+                </li>
+                <li>Two-phase training: 5 epochs frozen encoder (LR 1e-3), then 15 epochs full fine-tune (LR 5e-5)</li>
+                <li>Achieved AUROC 0.91 on held-out chr8 — above initial target; precision 0.87, recall 0.84</li>
+                <li>Noted class imbalance (3:1 benign:pathogenic); applied focal loss which improved recall from 0.79 to
+                  0.84</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Artifacts</div>
               <div class="artifacts-row">
-                <span class="artifact">routers/todos.py</span>
-                <span class="artifact">cache_manager.py</span>
+                <span class="artifact">tasks/clinvar.py</span>
+                <span class="artifact">data/clinvar_snvs.tsv</span>
+                <span class="artifact">configs/finetune_clinvar.yaml</span>
+                <span class="artifact">train_finetune.py</span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="transition anim d5">
-          <span class="transition-text">Cache fix was correct, but a performance check revealed list queries had
-            degraded from ~50ms to ~200ms — something else was wrong</span>
+          <span class="transition-text">Strong classification results raised the question: what is the model actually
+            learning? Decided to inspect attention patterns for biological interpretability</span>
         </div>
 
-        <!-- Step 6 -->
+        <!-- Step 9 -->
         <div class="step-card anim d6" onclick="toggle(this)">
           <div class="step-dot success"></div>
           <div class="step-header">
-            <span class="step-num">#6</span>
-            <span class="step-title">Fix N+1 query in get_todos_with_tags()</span>
+            <span class="step-num">#9</span>
+            <span class="step-title">Analyze attention heads for biological motifs</span>
             <span class="badge success">Success</span>
           </div>
-          <div class="step-preview">Lazy-loading tags caused N+1 queries; switched to joinedload() — response time 200ms
-            → 40ms</div>
+          <div class="step-preview">Head 7 in layer 4 strongly attends to splice donor/acceptor motifs (GT–AG); head 2
+            in layer 6 tracks TATA-like promoter elements</div>
           <div class="step-detail">
             <div class="detail-section">
               <div class="detail-heading">Intent</div>
               <ul class="detail-bullets">
-                <li>After cache fix, benchmarks showed GET /todos taking ~200ms (was ~50ms), suggesting a pre-existing
-                  N+1 problem previously masked by aggressive caching</li>
-                <li>With cache invalidation now working correctly (more cache misses), the slow underlying queries were
-                  exposed</li>
-                <li>Needed to profile SQLAlchemy queries and identify the bottleneck</li>
+                <li>Wanted to validate that high AUROC reflects biologically meaningful features, not just sequence
+                  composition bias</li>
+                <li>Planned to extract attention matrices from each head and correlate with known regulatory annotations
+                  from ENCODE</li>
+                <li>Focus on splice sites and promoter motifs as they are well-characterized ground truth</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Expected</div>
               <ul class="detail-bullets">
-                <li>Replace lazy loading with eager loading (<code>joinedload()</code>) to reduce N+1 → single JOIN
-                  query</li>
-                <li>Response time should drop back under 60ms</li>
+                <li>At least some attention heads should show enrichment at known functional motifs</li>
+                <li>If no heads correlate, the model may be overfitting on trivial features</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Result</div>
               <ul class="detail-bullets">
-                <li>Confirmed N+1: each todo triggered a separate SELECT for tags (~50 queries for 50 todos)</li>
-                <li>Refactored to <code>joinedload(Todo.tags)</code> — one JOIN query, response time dropped to ~40ms
+                <li>Extracted attention weights from all 8 heads × 6 layers across 500 ClinVar variant regions</li>
+                <li>Head L4-H7 shows striking enrichment at canonical splice donor (<code>GT</code>) and acceptor
+                  (<code>AG</code>) dinucleotides — Pearson r=0.72 with MaxEntScan scores</li>
+                <li>Head L6-H2 shows weak but consistent enrichment at TATA-box positions in promoter-proximal regions
                 </li>
-                <li>Added <code>echo=True</code> SQL debug toggle in <code>database.py</code> (disabled by default)</li>
+                <li>Remaining heads appear to encode positional or GC-content features — no clear biological motif</li>
+                <li>Saved visualizations using matplotlib heatmaps overlaid on sequence logos</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Artifacts</div>
               <div class="artifacts-row">
-                <span class="artifact">crud/todos.py</span>
-                <span class="artifact">database.py</span>
+                <span class="artifact">interpret/attention_analysis.py</span>
+                <span class="artifact">notebooks/attention_motifs.ipynb</span>
+                <span class="artifact">figures/head_L4H7_splice.png</span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="transition anim d6">
-          <span class="transition-text">With caching and query performance both resolved, shifted focus to a new
-            feature: pagination for scalability</span>
+          <span class="transition-text">Attention head analysis confirmed biological learning; wanted finer-grained,
+            per-nucleotide importance for individual variant predictions</span>
         </div>
 
-        <!-- Step 7 -->
+        <!-- Step 10 -->
         <div class="step-card anim d7" onclick="toggle(this)">
-          <div class="step-dot success"></div>
+          <div class="step-dot in_progress"></div>
           <div class="step-header">
-            <span class="step-num">#7</span>
-            <span class="step-title">Implement cursor-based pagination</span>
-            <span class="badge success">Success</span>
+            <span class="step-num">#10</span>
+            <span class="step-title">Implement gradient-weighted attribution</span>
+            <span class="badge in_progress">In Progress</span>
           </div>
-          <div class="step-preview">Chose cursor-based over offset-based for O(1) performance at scale; added
-            PaginatedResponse schema</div>
+          <div class="step-preview">Integrated gradient × input method for per-nucleotide importance; working on
+            comparing against ISM (in-silico mutagenesis) as ground truth</div>
           <div class="step-detail">
             <div class="detail-section">
               <div class="detail-heading">Intent</div>
               <ul class="detail-bullets">
-                <li>Dataset expected to grow to 100k+ items — needed pagination before that became a bottleneck</li>
-                <li>Chose cursor-based over offset-based: consistent results during mutations, O(1) at any page depth
+                <li>Attention maps show head-level patterns, but clinicians need per-nucleotide importance for a
+                  specific variant</li>
+                <li>Planned two methods: gradient × input (fast) and integrated gradients (more accurate)</li>
+                <li>Needed to validate attributions against ISM (exhaustive single-nt mutation scan) as gold standard
                 </li>
-                <li>API should accept <code>cursor</code> + <code>limit</code> params, return <code>next_cursor</code> +
-                  <code>has_more</code></li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Expected</div>
               <ul class="detail-bullets">
-                <li>GET /todos accepts optional cursor (int) and limit (default 20, max 100)</li>
-                <li>Response includes <code>next_cursor</code> and <code>has_more</code> for client-side pagination</li>
+                <li>Attribution scores should peak at the variant position and flanking regulatory elements</li>
+                <li>Correlation with ISM scores should be r > 0.6 if attributions are trustworthy</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Result</div>
               <ul class="detail-bullets">
-                <li>Implemented with <code>WHERE id > cursor ORDER BY id LIMIT limit+1</code> strategy</li>
-                <li>Created <code>PaginatedResponse</code> schema in <code>schemas/pagination.py</code></li>
-                <li>Updated cache key generation to include cursor + limit params</li>
+                <li>Implemented <code>gradient_x_input()</code> — fast, runs in ~200ms per variant</li>
+                <li>Integrated gradients implemented but slow (~8s per variant with 50 interpolation steps)</li>
+                <li>Preliminary comparison on 20 variants: gradient × input vs. ISM correlation r=0.58 — slightly below
+                  target</li>
+                <li><strong>Still running</strong> full ISM benchmark on 500 variants (estimated 6h on A100)</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Artifacts</div>
               <div class="artifacts-row">
-                <span class="artifact">routers/todos.py</span>
-                <span class="artifact">crud/todos.py</span>
-                <span class="artifact">schemas/pagination.py</span>
-                <span class="artifact">cache_manager.py</span>
+                <span class="artifact">interpret/attribution.py</span>
+                <span class="artifact">interpret/ism.py</span>
+                <span class="artifact">scripts/run_ism_benchmark.sh</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="transition anim d7">
-          <span class="transition-text">Pagination logic done — needed thorough testing, especially around boundary
-            conditions and the has_more flag</span>
+        <!-- ──── Session 2 ──── -->
+        <div class="session-divider" style="margin-top: 36px;">
+          <span class="session-divider-label">Session 2 · Feb 20, 2026</span>
         </div>
 
-        <!-- Step 8 -->
+        <!-- Step 5 -->
         <div class="step-card anim d8" onclick="toggle(this)">
           <div class="step-dot success"></div>
           <div class="step-header">
-            <span class="step-num">#8</span>
-            <span class="step-title">Add pagination integration tests</span>
+            <span class="step-num">#5</span>
+            <span class="step-title">Fix OOM with FlashAttention-2 + gradient checkpointing</span>
             <span class="badge success">Success</span>
           </div>
-          <div class="step-preview">12 test cases covering all edge cases; caught off-by-one bug in cursor calculation
-          </div>
+          <div class="step-preview">OOM at batch 64 / 4 kb context on A100; FlashAttention-2 + gradient checkpointing
+            reduced peak VRAM from 78 GB to 31 GB</div>
           <div class="step-detail">
             <div class="detail-section">
               <div class="detail-heading">Intent</div>
               <ul class="detail-bullets">
-                <li>Concerned about subtle edge cases: deleted item cursors, exact boundary when dataset size = limit,
-                  has_more correctness</li>
-                <li>Wanted comprehensive pytest suite with seeded test data and exact response assertions</li>
-              </ul>
-            </div>
-            <div class="detail-section">
-              <div class="detail-heading">Expected</div>
-              <ul class="detail-bullets">
-                <li>10+ test scenarios: first/middle/last page, empty result, boundary conditions, concurrent
-                  modification</li>
+                <li>Session 1 ended with OOM crash at batch_size=64 on 4 kb context windows on A100 80 GB</li>
+                <li>Profiling with <code>torch.cuda.memory_summary()</code> showed attention matrices consuming ~42 GB
+                  for full O(n²) attention</li>
+                <li>Two strategies: (1) FlashAttention-2 for memory-efficient attention, (2) gradient checkpointing to
+                  trade compute for memory</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Result</div>
               <ul class="detail-bullets">
-                <li>Created 12 test cases in <code>tests/test_pagination.py</code></li>
-                <li>Caught off-by-one: code included the extra (limit+1th) item in response instead of discarding it
-                </li>
-                <li>Fixed slicing logic and <code>next_cursor</code> calculation in <code>crud/todos.py</code></li>
-                <li>All 12 tests passing — serves as regression safety net</li>
+                <li>Installed <code>flash-attn==2.5.6</code>; replaced <code>nn.MultiheadAttention</code> with
+                  <code>flash_attn.flash_attn_func</code></li>
+                <li>Enabled <code>torch.utils.checkpoint.checkpoint()</code> on every other transformer block</li>
+                <li>Peak VRAM dropped from ~78 GB to ~31 GB; batch_size=64 now fits comfortably on A100 80 GB</li>
+                <li>Training throughput decreased ~15% due to checkpointing recomputation — acceptable trade-off</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Artifacts</div>
               <div class="artifacts-row">
-                <span class="artifact">tests/test_pagination.py</span>
-                <span class="artifact">crud/todos.py</span>
-                <span class="artifact">tests/conftest.py</span>
+                <span class="artifact">model/transformer.py</span>
+                <span class="artifact">requirements.txt</span>
+                <span class="artifact">configs/train_pretrain.yaml</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Session 1 -->
-        <div class="session-divider" style="margin-top: 36px;">
-          <span class="session-divider-label">Session 1 · Feb 20, 2026</span>
+        <div class="transition anim d8">
+          <span class="transition-text">OOM resolved — before launching full pretraining, reconsidered whether naive
+            character-level tokenization was optimal for long genomic sequences</span>
         </div>
 
-        <!-- Step 1 -->
+        <!-- Step 6 -->
         <div class="step-card anim d9" onclick="toggle(this)">
           <div class="step-dot success"></div>
           <div class="step-header">
-            <span class="step-num">#1</span>
-            <span class="step-title">Initialize FastAPI project structure</span>
+            <span class="step-num">#6</span>
+            <span class="step-title">BPE tokenizer trained on hg38 genome</span>
             <span class="badge success">Success</span>
           </div>
-          <div class="step-preview">Scaffolded modular FastAPI app with routers, models, schemas, CRUD layers + Alembic
-            migrations</div>
+          <div class="step-preview">Replaced 1-mer tokenization with BPE (vocab 4,096) trained on hg38 — 3.2×
+            compression, reducing 4 kb sequences to ~1,280 tokens</div>
           <div class="step-detail">
             <div class="detail-section">
               <div class="detail-heading">Intent</div>
               <ul class="detail-bullets">
-                <li>Starting new todo API — wanted clean, production-ready structure from the beginning</li>
-                <li>Requested separate directories for routers, models, schemas, CRUD (following FastAPI "Bigger
-                  Applications" pattern)</li>
-                <li>Wanted Alembic for database migrations set up from day one</li>
+                <li>Character-level tokenization (A/C/G/T) creates very long sequences (4,096 tokens for 4 kb) —
+                  expensive even with FlashAttention</li>
+                <li>Hypothesis: BPE can learn biologically meaningful subword units (common k-mers, repeat elements)
+                  while compressing sequence length</li>
+                <li>Considered alternatives: fixed 6-mer (4,096 vocab) vs. BPE — BPE can adapt to genome-specific
+                  frequency distributions</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Result</div>
               <ul class="detail-bullets">
-                <li>Created full scaffold: <code>main.py</code>, <code>database.py</code>, <code>models/todo.py</code>
-                  (Todo + Tag with M2M), <code>schemas/todo.py</code>, <code>routers/todos.py</code></li>
-                <li>Initialized Alembic, configured <code>env.py</code>, generated and applied initial migration</li>
-                <li>App starts cleanly on uvicorn</li>
+                <li>Trained BPE tokenizer using <code>tokenizers</code> library on chr1–chr22 of hg38 (3.1 Gbp)</li>
+                <li>Final vocabulary: 4,096 tokens; average compression ratio 3.2× (4,096 nt → ~1,280 tokens)</li>
+                <li>Inspected top tokens: many correspond to common dinucleotide repeats (CpG, CA/TG), Alu elements, and
+                  poly-A stretches</li>
+                <li><strong>Concern noted:</strong> some canonical splice motifs (GT-AG) get split across token
+                  boundaries — may need motif-aware constraints</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Artifacts</div>
               <div class="artifacts-row">
-                <span class="artifact">main.py</span>
-                <span class="artifact">database.py</span>
-                <span class="artifact">models/todo.py</span>
-                <span class="artifact">schemas/todo.py</span>
-                <span class="artifact">routers/todos.py</span>
-                <span class="artifact">alembic/env.py</span>
+                <span class="artifact">tokenizer/train_bpe.py</span>
+                <span class="artifact">tokenizer/bpe_4096.json</span>
+                <span class="artifact">data/genome_loader.py</span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="transition anim d9">
-          <span class="transition-text">Skeleton ready — moved on to implementing the actual CRUD business logic</span>
+          <span class="transition-text">Tokenizer ready and memory issues resolved — now had all components to launch
+            the full pretraining run</span>
         </div>
 
-        <!-- Step 2 -->
+        <!-- Step 7 -->
         <div class="step-card anim d10" onclick="toggle(this)">
           <div class="step-dot success"></div>
           <div class="step-header">
-            <span class="step-num">#2</span>
-            <span class="step-title">Implement core CRUD endpoints</span>
+            <span class="step-num">#7</span>
+            <span class="step-title">Pretrain 150M model on chr1–chr7 (50k steps)</span>
             <span class="badge success">Success</span>
           </div>
-          <div class="step-preview">POST, GET, PUT, DELETE for todos with proper validation, error handling, and Swagger
-            docs</div>
+          <div class="step-preview">50k steps of MLM pretraining on chromosomes 1–7; validation perplexity on chr8
+            converged to 4.21</div>
           <div class="step-detail">
             <div class="detail-section">
               <div class="detail-heading">Intent</div>
               <ul class="detail-bullets">
-                <li>Scaffold done — needed actual CRUD operations wired to endpoints</li>
-                <li>Wanted proper 404 responses, Pydantic validation, and tag loading via
-                  <code>get_todos_with_tags()</code></li>
+                <li>All components ready: FlashAttention model, BPE tokenizer, data loaders — time for full pretraining
+                </li>
+                <li>Used chr1–chr7 as training set (~1.3 Gbp), chr8 as validation (~145 Mbp), chr9 held out for final
+                  test</li>
+                <li>Target: perplexity < 5.0 on validation, competitive with Nucleotide Transformer (reported ~4.5 at
+                    150M scale)</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Result</div>
               <ul class="detail-bullets">
-                <li>All four CRUD operations working with proper HTTP status codes (201, 204, 404)</li>
-                <li>Swagger UI at <code>/docs</code> correctly documents all endpoints</li>
-                <li>Noted: tag loading uses lazy queries — potential N+1 issue deferred to later</li>
+                <li>Training completed in ~14 hours on 4× A100 with DeepSpeed ZeRO-2</li>
+                <li>Final validation perplexity: 4.21 — better than initial target, likely due to BPE compression
+                  reducing effective sequence complexity</li>
+                <li>Loss curves smooth; no signs of overfitting (train perplexity 3.94 vs. val 4.21)</li>
+                <li>Saved checkpoints every 10k steps to <code>checkpoints/pretrain/</code></li>
+                <li>WandB run logged: learning rate schedule (linear warmup 2k steps, cosine decay to 1e-5)</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Artifacts</div>
               <div class="artifacts-row">
-                <span class="artifact">crud/todos.py</span>
-                <span class="artifact">routers/todos.py</span>
+                <span class="artifact">train_pretrain.py</span>
+                <span class="artifact">configs/train_pretrain.yaml</span>
+                <span class="artifact">checkpoints/pretrain/step_50000/</span>
+                <span class="artifact">scripts/launch_distributed.sh</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="transition anim d10">
-          <span class="transition-text">CRUD layer working — wanted to add caching before the API sees real
-            traffic</span>
+        <!-- ──── Session 1 ──── -->
+        <div class="session-divider" style="margin-top: 36px;">
+          <span class="session-divider-label">Session 1 · Feb 19, 2026</span>
         </div>
 
-        <!-- Step 3 -->
+        <!-- Step 1 -->
         <div class="step-card anim d11" onclick="toggle(this)">
-          <div class="step-dot partial"></div>
+          <div class="step-dot success"></div>
           <div class="step-header">
-            <span class="step-num">#3</span>
-            <span class="step-title">Integrate Redis caching layer</span>
-            <span class="badge partial">Partial</span>
+            <span class="step-num">#1</span>
+            <span class="step-title">Scaffold project + hg38 data loaders</span>
+            <span class="badge success">Success</span>
           </div>
-          <div class="step-preview">CacheManager class added with connection pooling; but invalidation only wired for
-            POST, not PUT/DELETE</div>
+          <div class="step-preview">Set up AlphaGenome project structure; built FASTA data loader with pysam for
+            streaming hg38 windows with configurable context length</div>
           <div class="step-detail">
             <div class="detail-section">
               <div class="detail-heading">Intent</div>
               <ul class="detail-bullets">
-                <li>Optimize read-heavy workloads by caching GET /todos responses (TTL 60s)</li>
-                <li>Wanted clean abstraction — <code>CacheManager</code> class with <code>get()</code>,
-                  <code>set()</code>, <code>invalidate()</code></li>
-                <li>Redis connection pooling for efficiency</li>
+                <li>Starting a new genomic foundation model project inspired by Nucleotide Transformer and DNABERT-2
+                </li>
+                <li>Needed efficient data pipeline for sampling random genomic windows from hg38 reference genome</li>
+                <li>Required: streaming reads (genome too large to load in memory), configurable window size, N-masking
+                  for assembly gaps</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Result</div>
               <ul class="detail-bullets">
-                <li>Created <code>cache_manager.py</code> with pooled redis-py client</li>
-                <li>GET endpoint checks cache first — significant read speedup</li>
-                <li><strong>Bug:</strong> only added <code>invalidate_cache()</code> in <code>create_todo()</code>,
-                  missed PUT/DELETE — caught in Session 2</li>
-                <li>Pool size hardcoded to 10 — flagged as future config item</li>
+                <li>Created project structure: <code>model/</code>, <code>data/</code>, <code>tokenizer/</code>,
+                  <code>tasks/</code>, <code>configs/</code>, <code>scripts/</code></li>
+                <li>Built <code>GenomeDataset</code> class using <code>pysam.FastaFile</code> for random-access reads
+                  from indexed FASTA</li>
+                <li>Supports configurable window sizes (512 nt to 8 kb), chromosome filtering, and N-base exclusion</li>
+                <li>DataLoader with 8 workers achieves ~12k windows/sec throughput on NVMe SSD</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Artifacts</div>
               <div class="artifacts-row">
-                <span class="artifact">cache_manager.py</span>
-                <span class="artifact">routers/todos.py</span>
-                <span class="artifact">config.py</span>
+                <span class="artifact">data/genome_loader.py</span>
+                <span class="artifact">data/utils.py</span>
+                <span class="artifact">configs/data.yaml</span>
                 <span class="artifact">requirements.txt</span>
-                <span class="artifact">docker-compose.yml</span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="transition anim d11">
-          <span class="transition-text">Caching integrated — wanted to containerize everything for one-command
-            startup</span>
+          <span class="transition-text">Data pipeline working — moved on to defining the core model architecture</span>
         </div>
 
-        <!-- Step 4 -->
+        <!-- Step 2 -->
         <div class="step-card anim d12" onclick="toggle(this)">
           <div class="step-dot success"></div>
           <div class="step-header">
-            <span class="step-num">#4</span>
-            <span class="step-title">Docker Compose setup for local dev</span>
+            <span class="step-num">#2</span>
+            <span class="step-title">Implement Transformer encoder with RoPE</span>
             <span class="badge success">Success</span>
           </div>
-          <div class="step-preview">Three-service compose (app + PostgreSQL + Redis) with hot reload and auto-migrations
-            on startup</div>
+          <div class="step-preview">6-layer Transformer encoder (512 dim, 8 heads) with rotary positional embeddings for
+            length generalization</div>
           <div class="step-detail">
             <div class="detail-section">
               <div class="detail-heading">Intent</div>
               <ul class="detail-bullets">
-                <li>Project depends on PostgreSQL + Redis — manual setup too complex for collaborators</li>
-                <li>Wanted single <code>docker compose up</code> with hot-reload, persistent DB volume, and
-                  auto-migration on start</li>
+                <li>Chose Transformer encoder (BERT-style) over decoder — MLM objective better suited for bidirectional
+                  genomic context</li>
+                <li>Used rotary positional embeddings (RoPE) instead of absolute — better extrapolation to longer
+                  sequences at inference</li>
+                <li>Starting small (6 layers, 512 dim, ~25M params) for rapid iteration before scaling up</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Result</div>
               <ul class="detail-bullets">
-                <li>Multi-stage Dockerfile, three-service compose, named volume for Postgres</li>
-                <li>Entrypoint script runs Alembic migrations before app start</li>
-                <li>API accessible at <code>localhost:8000</code> — everything starts cleanly</li>
+                <li>Implemented custom <code>GenomicTransformerEncoder</code> with RoPE in
+                  <code>model/transformer.py</code></li>
+                <li>Added pre-norm (LayerNorm before attention/FFN) for training stability</li>
+                <li>Unit tests pass: forward pass on batch of 32 × 2,048 tokens in 45ms on A100</li>
               </ul>
             </div>
             <div class="detail-section">
               <div class="detail-heading">Artifacts</div>
               <div class="artifacts-row">
-                <span class="artifact">docker-compose.yml</span>
-                <span class="artifact">Dockerfile</span>
-                <span class="artifact">entrypoint.sh</span>
-                <span class="artifact">.env.example</span>
+                <span class="artifact">model/transformer.py</span>
+                <span class="artifact">model/rope.py</span>
+                <span class="artifact">tests/test_model.py</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="transition anim d12">
+          <span class="transition-text">Architecture defined — needed to implement the self-supervised training
+            objective</span>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-card anim d13" onclick="toggle(this)">
+          <div class="step-dot success"></div>
+          <div class="step-header">
+            <span class="step-num">#3</span>
+            <span class="step-title">Build MLM training objective</span>
+            <span class="badge success">Success</span>
+          </div>
+          <div class="step-preview">15% random nucleotide masking with 80/10/10 mask/random/keep strategy on 2 kb
+            windows; cross-entropy loss on masked positions only</div>
+          <div class="step-detail">
+            <div class="detail-section">
+              <div class="detail-heading">Intent</div>
+              <ul class="detail-bullets">
+                <li>Standard masked language modeling: mask 15% of input nucleotides, train model to predict the
+                  originals</li>
+                <li>Used 80/10/10 strategy (80% [MASK] token, 10% random nucleotide, 10% unchanged) following BERT</li>
+                <li>Considered span masking (mask contiguous k-mers) but deferred for simplicity in v1</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Result</div>
+              <ul class="detail-bullets">
+                <li>Implemented <code>MLMCollator</code> in <code>data/collator.py</code> — handles dynamic masking per
+                  batch</li>
+                <li>Loss computed only on masked positions using <code>CrossEntropyLoss(ignore_index=-100)</code></li>
+                <li>Verified: random baseline achieves ~1.39 nats loss (−ln(1/4)); model should converge well below this
+                </li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Artifacts</div>
+              <div class="artifacts-row">
+                <span class="artifact">data/collator.py</span>
+                <span class="artifact">train_pretrain.py</span>
+                <span class="artifact">tests/test_collator.py</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="transition anim d13">
+          <span class="transition-text">All components in place — attempted first end-to-end training run to validate
+            the pipeline</span>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step-card anim d14" onclick="toggle(this)">
+          <div class="step-dot failed"></div>
+          <div class="step-header">
+            <span class="step-num">#4</span>
+            <span class="step-title">First training run — OOM crash</span>
+            <span class="badge failed">Failed</span>
+          </div>
+          <div class="step-preview">Training crashed with CUDA OOM at batch_size=64, context=4096 nt on A100 80 GB —
+            full attention O(n²) too expensive</div>
+          <div class="step-detail">
+            <div class="detail-section">
+              <div class="detail-heading">Intent</div>
+              <ul class="detail-bullets">
+                <li>End-to-end smoke test: data loader → tokenizer → model → MLM loss → backward pass</li>
+                <li>Wanted to verify the full pipeline works before committing to long training runs</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Result</div>
+              <ul class="detail-bullets">
+                <li>Forward pass succeeded; loss computed correctly (initial loss ~1.38, close to random baseline as
+                  expected)</li>
+                <li>OOM on <code>loss.backward()</code> at batch_size=64, sequence_length=4096 — peaked at ~78 GB</li>
+                <li>Profiling showed attention matrices account for ~42 GB (self-attention is O(n²) in memory)</li>
+                <li>Batch_size=8 works but too small for stable training — need FlashAttention or gradient checkpointing
+                </li>
+                <li>Deferred memory optimization to next session</li>
+              </ul>
+            </div>
+            <div class="detail-section">
+              <div class="detail-heading">Artifacts</div>
+              <div class="artifacts-row">
+                <span class="artifact">train_pretrain.py</span>
+                <span class="artifact">logs/oom_profile.txt</span>
               </div>
             </div>
           </div>
@@ -1082,33 +1215,46 @@
     </section>
 
     <!-- ════════ OPEN THREADS ════════ -->
-    <section id="threads" class="anim d12">
+    <section id="threads" class="anim d14">
       <div class="section-label">Open Threads</div>
       <div class="card">
         <div class="thread">
-          <div class="thread-icon">🔐</div>
-          <div class="thread-body">
-            <div class="thread-title">User Authentication (JWT)</div>
-            <div class="thread-desc">Per-user todo isolation requires JWT auth, User model, and foreign keys on Todo.
+          <div class="thread-icon">🧪</div>
+          <div>
+            <div class="thread-title">CADD Score Benchmark</div>
+            <div class="thread-desc">Need to benchmark variant effect prediction against CADD v1.7 and Enformer on
+              non-coding regulatory variants.</div>
+            <div class="thread-next">→ Download CADD annotations, implement evaluation script, compare AUROC/AUPRC</div>
+          </div>
+        </div>
+        <div class="thread">
+          <div class="thread-icon">🔤</div>
+          <div>
+            <div class="thread-title">Motif-Aware Tokenization</div>
+            <div class="thread-desc">BPE tokenizer sometimes splits known biological motifs (TATA box, splice sites).
+              Consider adding motif constraints or a hybrid tokenizer.</div>
+            <div class="thread-next">→ Compile JASPAR motif database, add "never-split" rules to BPE, retrain tokenizer
             </div>
-            <div class="thread-next">→ Create User model, implement /auth endpoints, add JWT middleware</div>
           </div>
         </div>
         <div class="thread">
-          <div class="thread-icon">⚙️</div>
-          <div class="thread-body">
-            <div class="thread-title">Redis Pool Size Config</div>
-            <div class="thread-desc">Hardcoded to 10 in config.py. Needs <code>REDIS_POOL_SIZE</code> env var for
-              production.</div>
-            <div class="thread-next">→ Add env var fallback in config.py, update .env.example</div>
+          <div class="thread-icon">📈</div>
+          <div>
+            <div class="thread-title">Scale to 500M Parameters</div>
+            <div class="thread-desc">Current 150M model shows promising results. Literature suggests genomic LMs benefit
+              significantly from scaling (Nucleotide Transformer: 2.5B).</div>
+            <div class="thread-next">→ Design 500M config (12 layers, 1024 dim, 16 heads), estimate compute budget on 8×
+              A100 node</div>
           </div>
         </div>
         <div class="thread">
-          <div class="thread-icon">🩺</div>
-          <div class="thread-body">
-            <div class="thread-title">Health Check Endpoint</div>
-            <div class="thread-desc">No /health endpoint yet. Needed for Docker/K8s liveness probes.</div>
-            <div class="thread-next">→ Add GET /health that pings both PostgreSQL and Redis</div>
+          <div class="thread-icon">🧬</div>
+          <div>
+            <div class="thread-title">Enhancer Activity Prediction Task</div>
+            <div class="thread-desc">ENCODE STARR-seq data provides quantitative enhancer activity labels. Good second
+              fine-tuning task to test regression capabilities.</div>
+            <div class="thread-next">→ Process STARR-seq data from ENCODE, build regression head, fine-tune and evaluate
+              Pearson r</div>
           </div>
         </div>
       </div>
