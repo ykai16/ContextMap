@@ -34,8 +34,13 @@ Tomorrow, you'll open your terminal and ask yourself:
 
 **ContextMap** solves this. It automatically records your Claude Code sessions and generates a beautiful HTML report that reconstructs your coding journey — showing not just *what* you did, but *why* each prompt led to the next.
 
-## 🎯 Features
+## 🎯 Features (v1.02)
 
+### ✨ Key Updates in v1.02
+- **Full Prompt Evolution Tracking**: Diagnosed and fixed an issue where only the last prompt was captured; ContextMap now explicitly extracts and sequences all your prompts so the underlying AI grasps the complete evolution of your intent.
+- **Improved Versioning**: The ContextMap version is now clearly identifiable on launch!
+
+### Core Features
 - 🔗 **Evolution Chain** — Tracks how prompts connect and evolve, showing the *intent* behind each transition
 - 📊 **Rich HTML Reports** — Beautifully styled, self-contained HTML files you can open in any browser
 - 🧠 **Session Narrative** — High-level bullet-point summary of each session's accomplishments

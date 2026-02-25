@@ -6,6 +6,8 @@ import argparse
 import datetime
 from typing import List, Dict
 
+__version__ = "1.02"
+
 # No external dependencies required for CLI-piping mode
 # try:
 #     from openai import OpenAI
@@ -62,20 +64,72 @@ def smart_compress_transcript(raw_text: str) -> str:
     
     return full_text
 
-def parse_transcript(log_path: str) -> str:
+def extract_prompt_evolution(raw_text: str) -> str:
+    """Extract and sequence ALL user prompts from the session log in order, inferring intent."""
+    cleaned = clean_ansi(raw_text)
+    lines = cleaned.split('\n')
+    
+    RELATIONSHIP_KEYWORDS = {
+        'REFINE':    ['more', 'better', 'also', 'additionally', 'improve', 'refine', 'update', 'change', 'adjust', 'cleaner'],
+        'CORRECT':   ['wrong', 'incorrect', 'mistake', 'error', 'fix', 'not ', 'instead', 'actually', 'no,', 'wait', 'that is not'],
+        'EXPAND':    ['add', 'include', 'extend', 'expand', 'plus', 'and also', 'as well', 'furthermore'],
+        'PIVOT':     ['different', 'new idea', 'switch', 'forget', "let's do", 'actually let', 'start over', 'completely'],
+        'VERIFY':    ['check', 'confirm', 'is it', 'did you', 'does it', 'test', 'show me', 'what is', 'verify', 'make sure'],
+        'FOLLOW_UP': ['ok', 'okay', 'great', 'good', 'thanks', 'now', 'next', 'then', 'alright', 'perfect'],
+    }
+    
+    def classify_relationship(text: str, index: int) -> str:
+        if index == 0:
+            return 'INITIAL'
+        lower = text.lower()
+        for rel, keywords in RELATIONSHIP_KEYWORDS.items():
+            if any(kw in lower for kw in keywords):
+                return rel
+        return 'CONTINUATION'
+
+    prompts = []
+    current = []
+    
+    for line in lines:
+        stripped = line.strip()
+        if re.match(r'^[>\u276f]\s+\S', stripped) or re.match(r'^\?\s+\S', stripped) or stripped.startswith("Human:") or stripped.startswith("User:"):
+            if current:
+                prompts.append(" ".join(current))
+            current = [stripped]
+        elif current:
+            if re.match(r'^(Claude|Assistant|AI):|^\s*[\u23bf\u2713\u2717\u25cf\u2022]\s+', stripped) or (stripped == "" and len(current) > 3):
+                prompts.append(" ".join(current))
+                current = []
+            elif stripped:
+                current.append(stripped)
+                
+    if current:
+        prompts.append(" ".join(current))
+        
+    if not prompts:
+        return "[No structured user prompts detected]"
+        
+    res = [f"=== PROMPT EVOLUTION SEQUENCE ({len(prompts)} steps) ==="]
+    for i, p in enumerate(prompts):
+        rel = classify_relationship(p, i)
+        res.append(f"[PROMPT #{i} | {rel}] {p}")
+        
+    return "\n".join(res)
+
+def parse_transcript(log_path: str):
     """Reads and compresses the log."""
     if not os.path.exists(log_path):
-        return ""
+        return "", ""
     
     try:
         with open(log_path, 'r', errors='replace') as f:
             raw_data = f.read()
             
-        return smart_compress_transcript(raw_data)
+        return smart_compress_transcript(raw_data), extract_prompt_evolution(raw_data)
     except Exception as e:
-        return f"[Error reading log: {str(e)}]"
+        return f"[Error reading log: {str(e)}]", ""
 
-def generate_summary(transcript: str, old_summary: str = "", model: str = None) -> str:
+def generate_summary(transcript: str, prompt_evolution: str, old_summary: str = "", model: str = None) -> str:
     """Uses Claude Code (CLI) itself to maintain the HTML context map."""
     
     system_prompt = """You are "ContextMap", an AI assistant that analyzes Claude Code session transcripts and produces a self-contained HTML report reconstructing the user's coding journey — with emphasis on how each prompt EVOLVES from and CONNECTS to the others.
@@ -89,10 +143,12 @@ each new prompt, and how their thinking evolved.
 
 Your job: RECONSTRUCT THE STORY — the chain of intent linking prompt to prompt.
 
-You will receive TWO inputs:
+You will receive THREE inputs:
 1) === PREVIOUS SESSION HTML ===
    Existing ContextMap HTML (may be empty on first run).
-2) === CURRENT SESSION TRANSCRIPT ===
+2) === PROMPT EVOLUTION SEQUENCE ===
+   The ordered series of user prompts with classified intent labels (e.g. REFINE, PIVOT, EXPAND).
+3) === CURRENT SESSION TRANSCRIPT ===
    Compressed terminal transcript of the latest session.
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -278,8 +334,7 @@ CRITICAL REMINDERS
 8. Include specific file names, function names, concrete outcomes.
 """
     
-    # Construct input block (user message with both previous HTML and current transcript)
-    prompt_content = f"=== PREVIOUS SESSION HTML ===\n{old_summary}\n\n=== CURRENT SESSION TRANSCRIPT ===\n{transcript[-80000:]}"
+    prompt_content = f"=== PREVIOUS SESSION HTML ===\n{old_summary}\n\n{prompt_evolution}\n\n=== CURRENT SESSION TRANSCRIPT ===\n{transcript[-80000:]}"
     
     import tempfile
     import subprocess
@@ -379,8 +434,8 @@ def main():
         pass
 
     # 2. Parse & Analyze
-    print("🧠 Analyzing session context...")
-    transcript = parse_transcript(args.log_file)
+    print(f"ContextMap v{__version__} - Analyzing session context...")
+    transcript, prompt_evolution = parse_transcript(args.log_file)
     if not transcript.strip():
         print("⚠️  Empty transcript. Nothing to analyze.")
         return
@@ -395,7 +450,7 @@ def main():
             pass
 
     # Call summary generation (which now uses Claude CLI subprocess)
-    summary = generate_summary(transcript, old_summary=old_summary, model=args.model)
+    summary = generate_summary(transcript, prompt_evolution, old_summary=old_summary, model=args.model)
     
     # 3. Save
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
