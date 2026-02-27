@@ -34,7 +34,14 @@ Tomorrow, you'll open your terminal and ask yourself:
 
 **ContextMap** solves this. It automatically records your Claude Code sessions and generates a beautiful HTML report that reconstructs your coding journey — showing not just *what* you did, but *why* each prompt led to the next.
 
-## 🎯 Features (v1.02)
+## 🎯 Features (v1.1.1)
+
+### ✨ Key Updates in v1.1.1
+- **Checkpoint Mechanism for Long Sessions**: ContextMap now splits any session into groups of 3 prompts and processes them incrementally. Each group is summarized and saved to the HTML file immediately — so even hour-long sessions with dozens of prompts are handled reliably, without hitting context-length limits or losing progress.
+  - The HTML is saved after every 3-prompt checkpoint, meaning you never lose work if something fails mid-analysis.
+  - The final report is a single cohesive document — no visible seams between checkpoints.
+  - Configurable via `--chunk-size N` (default: 3).
+- **Fixed Output Path Bug**: `--out` now works correctly with bare filenames (no directory prefix required).
 
 ### ✨ Key Updates in v1.02
 - **Full Prompt Evolution Tracking**: Diagnosed and fixed an issue where only the last prompt was captured; ContextMap now explicitly extracts and sequences all your prompts so the underlying AI grasps the complete evolution of your intent.
@@ -48,6 +55,7 @@ Tomorrow, you'll open your terminal and ask yourself:
 - 🔄 **Multi-Session Tracking** — Merges history across sessions into a single evolving report
 - 🎨 **Claude Code Aesthetic** — Polished dark theme inspired by Claude Code's design language
 - ⚡ **Zero Friction** — Wraps your `claude` command transparently; just use Claude Code as usual
+- 🧩 **Long-Session Checkpoint Processing** — Automatically splits and processes long sessions in chunks; no session is too long
 
 ## 🚀 Quick Start
 
@@ -84,10 +92,14 @@ ContextMap wraps your `claude` command with an intelligent recording layer:
 │  2. 🎙️  Record session transparently                    │
 │         All interactions captured via script/pty          │
 │                                                          │
-│  3. 🧠  Analyze on exit                                 │
-│         Send transcript → LLM → generate HTML report     │
+│  3. 🧩  Split into checkpoint chunks (every 3 prompts)  │
+│         Handles sessions of any length reliably           │
 │                                                          │
-│  4. 📊  Save report                                     │
+│  4. 🧠  Analyze each chunk incrementally                │
+│         Each group of 3 prompts → LLM → append to HTML  │
+│         HTML saved after every checkpoint (never lost)   │
+│                                                          │
+│  5. 📊  Save final report                               │
 │         .context/session_summary.html updated             │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -146,6 +158,22 @@ ContextMap uses the **`claude` CLI directly** for session analysis — the same 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
 | `REAL_CLAUDE_PATH` | Override path to the `claude` binary (useful if you have multiple installations) | auto-detected |
+
+### CLI Options for `contextmap.py`
+
+You normally don't call `contextmap.py` directly — `wrapper.py` does it for you on session exit. But you can also run it manually:
+
+```bash
+python3 bin/contextmap.py <log_file> [--out PATH] [--chunk-size N] [--model NAME]
+```
+
+| Option | Description | Default |
+| :--- | :--- | :--- |
+| `--out PATH` | Where to write the HTML report | `.context/session_summary.html` |
+| `--chunk-size N` | Number of prompts per checkpoint batch | `3` |
+| `--model NAME` | Model name used in the session (informational only) | — |
+
+> 💡 Increase `--chunk-size` for shorter, simpler sessions. Decrease it if each prompt + response is very long.
 
 ### File Structure
 
@@ -206,6 +234,7 @@ python3 -c "import py_compile; py_compile.compile('bin/contextmap.py', doraise=T
 - [x] Multi-session merge and context tracking
 - [x] Evolution chain with transition triggers
 - [x] Claude Code-inspired visual design
+- [x] Checkpoint mechanism for long sessions (v1.1.1)
 - [ ] Custom prompt templates
 - [ ] Multiple LLM provider support (Anthropic, Gemini, local models)
 - [ ] VS Code extension for in-editor report viewing
