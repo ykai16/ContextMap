@@ -34,7 +34,11 @@ Tomorrow, you'll open your terminal and ask yourself:
 
 **ContextMap** solves this. It automatically records your Claude Code sessions and generates a beautiful HTML report that reconstructs your coding journey — showing not just *what* you did, but *why* each prompt led to the next.
 
-## 🎯 Features (v1.1.1)
+## 🎯 Features (v1.2.0)
+
+### ✨ Key Updates in v1.2.0
+- **Version Display**: The ContextMap version number is now shown on every `claude` launch — e.g. `🦉 ContextMap v1.2.0 active.`
+- **Auto-Update**: ContextMap checks GitHub for a newer version once per day (result cached — zero overhead on subsequent launches). When a new version is found, it automatically runs `git pull` in the ContextMap directory and prompts you to restart your terminal. If the update fails (no network, no git), it silently degrades and optionally shows a manual update command.
 
 ### ✨ Key Updates in v1.1.1
 - **Checkpoint Mechanism for Long Sessions**: ContextMap now splits any session into groups of 3 prompts and processes them incrementally. Each group is summarized and saved to the HTML file immediately — so even hour-long sessions with dozens of prompts are handled reliably, without hitting context-length limits or losing progress.
@@ -56,6 +60,7 @@ Tomorrow, you'll open your terminal and ask yourself:
 - 🎨 **Claude Code Aesthetic** — Polished dark theme inspired by Claude Code's design language
 - ⚡ **Zero Friction** — Wraps your `claude` command transparently; just use Claude Code as usual
 - 🧩 **Long-Session Checkpoint Processing** — Automatically splits and processes long sessions in chunks; no session is too long
+- 🔄 **Auto-Update** — Checks GitHub daily and updates itself automatically; always on the latest version
 
 ## 🚀 Quick Start
 
@@ -183,6 +188,8 @@ your-project/
 │   ├── session_summary.html    ← The generated report
 │   └── logs/                   ← Raw session logs (auto-cleaned)
 └── ...
+
+~/.contextmap_update_cache      ← Daily update-check cache (auto-managed)
 ```
 
 ## 🏗️ Architecture
@@ -235,6 +242,7 @@ python3 -c "import py_compile; py_compile.compile('bin/contextmap.py', doraise=T
 - [x] Evolution chain with transition triggers
 - [x] Claude Code-inspired visual design
 - [x] Checkpoint mechanism for long sessions (v1.1.1)
+- [x] Version display on launch + auto-update from GitHub (v1.2.0)
 - [ ] Custom prompt templates
 - [ ] Multiple LLM provider support (Anthropic, Gemini, local models)
 - [ ] VS Code extension for in-editor report viewing

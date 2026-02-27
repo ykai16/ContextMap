@@ -6,7 +6,7 @@ import argparse
 import datetime
 from typing import List, Dict
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 
 # No external dependencies required for CLI-piping mode
 
