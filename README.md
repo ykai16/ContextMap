@@ -34,7 +34,10 @@ Tomorrow, you'll open your terminal and ask yourself:
 
 **ContextMap** solves this. It automatically records your Claude Code sessions and generates a beautiful HTML report that reconstructs your coding journey — showing not just *what* you did, but *why* each prompt led to the next.
 
-## 🎯 Features (v1.2.0)
+## 🎯 Features (v1.3.0)
+
+### ✨ Key Updates in v1.3.0
+- **Intelligent Prompt Deduplication**: PTY terminal logs frequently contain duplicate prompt lines caused by terminal redraws (screen refresh, resize, scrollback). ContextMap now filters these out automatically before analysis. A genuine prompt-response pair always has substantive content after the prompt line — redraw artifacts don't, and are silently dropped. A deduplication report is printed when noise is removed: `🔍 Deduplication: 38 raw segments → 9 unique prompts (29 duplicates removed)`.
 
 ### ✨ Key Updates in v1.2.0
 - **Version Display**: The ContextMap version number is now shown on every `claude` launch — e.g. `🦉 ContextMap v1.2.0 active.`
@@ -97,14 +100,17 @@ ContextMap wraps your `claude` command with an intelligent recording layer:
 │  2. 🎙️  Record session transparently                    │
 │         All interactions captured via script/pty          │
 │                                                          │
-│  3. 🧩  Split into checkpoint chunks (every 3 prompts)  │
+│  3. 🔍  Deduplicate prompts                             │
+│         Drop terminal-redraw noise; keep unique prompts   │
+│                                                          │
+│  4. 🧩  Split into checkpoint chunks (every 3 prompts)  │
 │         Handles sessions of any length reliably           │
 │                                                          │
-│  4. 🧠  Analyze each chunk incrementally                │
+│  5. 🧠  Analyze each chunk incrementally                │
 │         Each group of 3 prompts → LLM → append to HTML  │
 │         HTML saved after every checkpoint (never lost)   │
 │                                                          │
-│  5. 📊  Save final report                               │
+│  6. 📊  Save final report                               │
 │         .context/session_summary.html updated             │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -243,6 +249,7 @@ python3 -c "import py_compile; py_compile.compile('bin/contextmap.py', doraise=T
 - [x] Claude Code-inspired visual design
 - [x] Checkpoint mechanism for long sessions (v1.1.1)
 - [x] Version display on launch + auto-update from GitHub (v1.2.0)
+- [x] Intelligent prompt deduplication — filters terminal-redraw noise (v1.3.0)
 - [ ] Custom prompt templates
 - [ ] Multiple LLM provider support (Anthropic, Gemini, local models)
 - [ ] VS Code extension for in-editor report viewing
