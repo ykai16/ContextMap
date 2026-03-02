@@ -6,7 +6,7 @@ import argparse
 import datetime
 from typing import List, Dict
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 # No external dependencies required for CLI-piping mode
 
@@ -150,6 +150,39 @@ def chunk_segments(segments: List[str], chunk_size: int = 3) -> List[str]:
         chunk_text = '\n\n'.join(segments[i:i + chunk_size])
         chunks.append(chunk_text)
     return chunks
+
+def filter_thin_segments(segments: List[str], min_response_lines: int = 2) -> List[str]:
+    """
+    Remove segments caused by terminal redraws.
+
+    A genuine prompt-response pair always has substantive content after the
+    prompt line.  Terminal redraws (whole-line refresh, scrollback, resize)
+    produce a segment whose 'response' is empty or just one stray line before
+    the next prompt fires.  Dropping these thin segments filters out the noise
+    regardless of whether the prompt text is identical, a prefix, or a
+    scrollback copy of an earlier prompt.
+
+    min_response_lines: minimum number of non-empty lines *after* the first
+    prompt line for a segment to be kept (default: 2).
+    """
+    if not segments:
+        return segments
+
+    kept = []
+    for seg in segments:
+        lines = seg.split('\n')
+        # Count non-empty lines that come after the opening prompt line
+        response_lines = [l for l in lines[1:] if l.strip()]
+        if len(response_lines) >= min_response_lines:
+            kept.append(seg)
+
+    removed = len(segments) - len(kept)
+    if removed > 0:
+        print(f"🔍 Deduplication: {len(segments)} raw segments → {len(kept)} unique prompts "
+              f"({removed} terminal-redraw duplicates removed)")
+
+    return kept
+
 
 def parse_transcript(log_path: str):
     """Reads and compresses the log (used for single-pass fallback)."""
@@ -499,6 +532,9 @@ def main():
 
     # ── Split transcript by prompt boundaries ────────────────────────────────
     segments = split_transcript_by_prompts(raw_data)
+
+    # ── Deduplicate: drop terminal-redraw thin segments ───────────────────────
+    segments = filter_thin_segments(segments)
 
     # ── Load any existing HTML (for multi-session merging) ───────────────────
     old_summary = ""
