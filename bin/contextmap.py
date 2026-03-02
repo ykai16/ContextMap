@@ -151,19 +151,21 @@ def chunk_segments(segments: List[str], chunk_size: int = 3) -> List[str]:
         chunks.append(chunk_text)
     return chunks
 
-def filter_thin_segments(segments: List[str], min_response_lines: int = 2) -> List[str]:
+def filter_thin_segments(segments: List[str], min_response_lines: int = 3) -> List[str]:
     """
     Remove segments caused by terminal redraws.
 
     A genuine prompt-response pair always has substantive content after the
     prompt line.  Terminal redraws (whole-line refresh, scrollback, resize)
-    produce a segment whose 'response' is empty or just one stray line before
-    the next prompt fires.  Dropping these thin segments filters out the noise
-    regardless of whether the prompt text is identical, a prefix, or a
-    scrollback copy of an earlier prompt.
+    produce a segment whose 'response' is empty or just a few stray lines
+    before the next prompt fires.  Dropping these thin segments filters out
+    the noise regardless of whether the prompt text is identical, a prefix,
+    or a scrollback copy of an earlier prompt.
 
     min_response_lines: minimum number of non-empty lines *after* the first
-    prompt line for a segment to be kept (default: 2).
+    prompt line for a segment to be kept (default: 3).  Claude Code responses
+    are almost always longer than 3 lines, so this threshold safely filters
+    redraw artifacts without discarding real exchanges.
     """
     if not segments:
         return segments
