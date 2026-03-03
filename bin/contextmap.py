@@ -6,7 +6,7 @@ import argparse
 import datetime
 from typing import List, Dict
 
-__version__ = "1.3.2"
+__version__ = "1.4.0"
 
 # No external dependencies required for CLI-piping mode
 
@@ -138,13 +138,26 @@ def split_transcript_by_prompts(raw_text: str) -> List[str]:
 
     return segments
 
-def chunk_segments(segments: List[str], chunk_size: int = 10) -> List[str]:
-    """Group prompt segments into chunks of chunk_size prompts each."""
-    chunks = []
-    for i in range(0, len(segments), chunk_size):
-        chunk_text = '\n\n'.join(segments[i:i + chunk_size])
-        chunks.append(chunk_text)
-    return chunks
+def split_log_into_parts(raw_text: str, n_parts: int) -> List[str]:
+    """
+    Split the raw log into N roughly equal parts at line boundaries.
+
+    Splitting by line count avoids cutting in the middle of a prompt or
+    response.  Parts are returned in order; empty parts are dropped.
+    """
+    if n_parts <= 1:
+        return [raw_text]
+
+    lines = raw_text.split('\n')
+    part_size = max(1, len(lines) // n_parts)
+    parts = []
+    for i in range(n_parts):
+        start = i * part_size
+        end   = start + part_size if i < n_parts - 1 else len(lines)
+        part  = '\n'.join(lines[start:end])
+        if part.strip():
+            parts.append(part)
+    return parts if parts else [raw_text]
 
 def filter_thin_segments(segments: List[str], min_response_lines: int = 3) -> List[str]:
     """
@@ -181,102 +194,6 @@ def filter_thin_segments(segments: List[str], min_response_lines: int = 3) -> Li
     return kept
 
 
-def extract_unique_prompts_via_llm(segments: List[str]) -> List[str]:
-    """
-    Use Claude to identify genuinely unique user prompts from extracted segments.
-
-    Applies a fast heuristic pre-filter first (filter_thin_segments) to drop
-    obviously empty redraw segments without an API call, then sends the
-    remaining prompt texts to Claude for intelligent deduplication of any
-    residual duplicates.  Falls back gracefully to the heuristic result if
-    the LLM call fails for any reason.
-    """
-    if not segments:
-        return segments
-
-    # ── Step 1: cheap heuristic pre-filter (no API call) ─────────────────────
-    pre_filtered = filter_thin_segments(segments)
-    if len(pre_filtered) <= 1:
-        return pre_filtered
-
-    # ── Step 2: build a numbered list of prompt texts for Claude ─────────────
-    def get_prompt_text(seg: str) -> str:
-        first_line = seg.split('\n')[0].strip()
-        return re.sub(r'^[>\u276f\?]\s+|^(?:Human|User):\s*', '', first_line).strip() or first_line
-
-    numbered = "\n".join(
-        f"[{i}] {get_prompt_text(s)}" for i, s in enumerate(pre_filtered)
-    )
-
-    system_prompt = (
-        "You are reviewing user prompts extracted from a Claude Code terminal session log. "
-        "Terminal recordings often contain duplicate prompt lines caused by screen redraws, "
-        "scrollback buffer replays, or terminal resize events.\n\n"
-        "Your task: identify which entries are genuinely UNIQUE user prompts vs duplicates.\n\n"
-        "Rules:\n"
-        "- Mark a prompt UNIQUE if it represents a distinct user intent or action.\n"
-        "- Mark a prompt DUPLICATE if it is the same (or nearly the same) as an earlier one "
-        "— caused by terminal redraw, not a new user action.\n"
-        "- When the same text appears more than once, keep only the FIRST occurrence.\n"
-        "- Short prompts ('ok', 'continue', 'yes') are unique if they appear only once.\n\n"
-        "Respond with ONLY a JSON array of integers — the indices of the unique prompts.\n"
-        "Example: [0, 2, 5, 8]\n"
-        "No explanation. No markdown fences. Just the JSON array."
-    )
-
-    user_message = (
-        f"Below are {len(pre_filtered)} prompts extracted from a terminal session log. "
-        f"Many may still be duplicates from terminal redraws. "
-        f"Return a JSON array of the indices of UNIQUE prompts only.\n\n"
-        f"{numbered}"
-    )
-
-    real_claude = os.getenv("REAL_CLAUDE_PATH") or "claude"
-
-    import subprocess
-    import json as _json
-
-    try:
-        result = subprocess.run(
-            [real_claude, "-p", user_message, "--system-prompt", system_prompt],
-            text=True,
-            capture_output=True,
-        )
-
-        if result.returncode != 0:
-            print("⚠️  LLM prompt extraction failed — using heuristic result.")
-            return pre_filtered
-
-        raw_out = result.stdout.strip()
-
-        # Robustly parse a JSON integer array from the response
-        match = re.search(r'\[[\s\d,]+\]', raw_out)
-        if not match:
-            print("⚠️  LLM response unparseable — using heuristic result.")
-            return pre_filtered
-
-        indices = sorted(set(_json.loads(match.group())))
-        unique = [pre_filtered[i] for i in indices if 0 <= i < len(pre_filtered)]
-
-        removed_heuristic = len(segments) - len(pre_filtered)
-        removed_llm       = len(pre_filtered) - len(unique)
-        total_removed     = removed_heuristic + removed_llm
-
-        parts = [f"🔍 Deduplication: {len(segments)} raw segments"]
-        if removed_heuristic:
-            parts.append(f"→ {len(pre_filtered)} (heuristic)")
-        parts.append(f"→ {len(unique)} unique prompts")
-        if total_removed:
-            parts.append(f"({total_removed} duplicates removed)")
-        print(" ".join(parts))
-
-        return unique
-
-    except Exception as exc:
-        print(f"⚠️  LLM extraction error ({exc}) — using heuristic result.")
-        return pre_filtered
-
-
 def parse_transcript(log_path: str):
     """Reads and compresses the log (used for single-pass fallback)."""
     if not os.path.exists(log_path):
@@ -288,10 +205,23 @@ def parse_transcript(log_path: str):
     except Exception as e:
         return f"[Error reading log: {str(e)}]", ""
 
-def generate_summary(transcript: str, prompt_evolution: str, old_summary: str = "", model: str = None, checkpoint_info: str = None) -> str:
+def generate_summary(transcript: str, old_summary: str = "", model: str = None, part_info: str = None) -> str:
     """Uses Claude Code (CLI) itself to maintain the HTML context map."""
 
     system_prompt = """You are "ContextMap", an AI assistant that analyzes Claude Code session transcripts and produces a self-contained HTML report reconstructing the user's coding journey — with emphasis on how each prompt EVOLVES from and CONNECTS to the others.
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 0 — IDENTIFY UNIQUE USER PROMPTS
+═══════════════════════════════════════════════════════════════════════════════
+Before any analysis, scan the raw transcript and identify the UNIQUE user
+prompts. Terminal logs often contain many duplicate lines caused by screen
+redraws, scrollback replays, or keystroke echoes (each character typed may
+appear as a separate line after ANSI codes are stripped).
+
+Treat ALL duplicate prompt lines as if they don't exist — analyze only the
+FIRST occurrence of each distinct user intent. A line is a duplicate if it
+has the same wording OR is clearly a partial version of a later complete
+prompt (e.g. "fix the" before "fix the bug in auth.py").
 
 ═══════════════════════════════════════════════════════════════════════════════
 PURPOSE
@@ -302,13 +232,11 @@ each new prompt, and how their thinking evolved.
 
 Your job: RECONSTRUCT THE STORY — the chain of intent linking prompt to prompt.
 
-You will receive THREE inputs:
+You will receive TWO inputs:
 1) === PREVIOUS SESSION HTML ===
    Existing ContextMap HTML (may be empty on first run).
-2) === PROMPT EVOLUTION SEQUENCE ===
-   The ordered series of user prompts with classified intent labels (e.g. REFINE, PIVOT, EXPAND).
-3) === CURRENT SESSION TRANSCRIPT ===
-   Compressed terminal transcript of the latest session (or a checkpoint chunk).
+2) === CURRENT SESSION TRANSCRIPT ===
+   Compressed terminal transcript of the latest session (or a log part).
 
 ═══════════════════════════════════════════════════════════════════════════════
 OUTPUT RULES
@@ -324,16 +252,17 @@ DO NOT HALLUCINATE
 - If ambiguous, label "Likely" or "Unclear". Never invent.
 
 ═══════════════════════════════════════════════════════════════════════════════
-CHECKPOINT PROCESSING (incremental chunk updates)
+PART PROCESSING (large log split into multiple parts)
 ═══════════════════════════════════════════════════════════════════════════════
-When the message contains [CHECKPOINT X/N]:
-- The transcript is a PARTIAL CHUNK of an ongoing session, NOT a new session.
+When the message contains [PART X/N]:
+- This transcript is one section of a larger session split for context-length
+  reasons. It is NOT a new session.
 - Add the new prompts as additional steps WITHIN THE CURRENT SESSION GROUP
   (do NOT create a new session divider — they are part of the same session).
 - Re-generate Narrative bullets and Anchor cards to reflect ALL steps so far.
 - Continue step numbering from where the previous HTML left off.
-- If this is checkpoint 1/N with no previous HTML: create from scratch as session 1.
-- If N=1 (only one chunk): treat as a complete session (no "in progress" note).
+- If this is Part 1/N with no previous HTML: create from scratch as session 1.
+- If N=1 (only one part): treat as a complete session (no "in progress" note).
 
 ═══════════════════════════════════════════════════════════════════════════════
 CORE ANALYSIS: THE EVOLUTION CHAIN
@@ -505,22 +434,21 @@ CRITICAL REMINDERS
 8. Include specific file names, function names, concrete outcomes.
 """
 
-    # Add checkpoint context when processing in incremental chunked mode
-    checkpoint_note = ""
-    if checkpoint_info:
-        checkpoint_note = (
-            f"\n\n[CHECKPOINT {checkpoint_info}] "
-            "This is a partial chunk of an ongoing session. "
-            "Add these steps to the existing HTML within the current session group "
-            "(do NOT start a new session divider). "
+    # Add part context when log was split into multiple parts
+    part_note = ""
+    if part_info:
+        part_note = (
+            f"\n\n[PART {part_info}] "
+            "This transcript is one part of a larger session split for context-length reasons. "
+            "Add the new prompts as additional steps WITHIN THE CURRENT SESSION GROUP "
+            "(do NOT create a new session divider). "
             "Continue step numbering from where the previous HTML left off."
         )
 
     prompt_content = (
         f"=== PREVIOUS SESSION HTML ===\n{old_summary}\n\n"
-        f"{prompt_evolution}\n\n"
         f"=== CURRENT SESSION TRANSCRIPT ===\n{transcript[-80000:]}"
-        f"{checkpoint_note}"
+        f"{part_note}"
     )
 
     import tempfile
@@ -589,8 +517,8 @@ def main():
                         help="Output path for the HTML summary")
     parser.add_argument("--model", default=None,
                         help="The model used in the session (informational)")
-    parser.add_argument("--chunk-size", type=int, default=10,
-                        help="Number of prompts per checkpoint batch (default: 10)")
+    parser.add_argument("--parts", type=int, default=1,
+                        help="Split the log into N parts for large sessions (default: 1)")
     args = parser.parse_args()
 
     # ── Resolve output path (fixes crash when --out has no directory component) ──
@@ -623,12 +551,6 @@ def main():
         print(f"❌ Error reading log: {e}")
         return
 
-    # ── Split transcript by prompt boundaries ────────────────────────────────
-    segments = split_transcript_by_prompts(raw_data)
-
-    # ── Deduplicate: LLM-based unique prompt extraction ───────────────────────
-    segments = extract_unique_prompts_via_llm(segments)
-
     # ── Load any existing HTML (for multi-session merging) ───────────────────
     old_summary = ""
     if os.path.exists(out_path):
@@ -643,61 +565,39 @@ def main():
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
 
-    # ── Fallback: no prompt boundaries detected → single-pass (legacy) ───────
-    if not segments:
-        print("ℹ️  No prompt boundaries detected — falling back to single-pass mode.")
-        transcript = smart_compress_transcript(raw_data)
-        if not transcript.strip():
-            print("⚠️  Empty transcript. Nothing to analyze.")
-            return
-        prompt_evolution = extract_prompt_evolution(raw_data)
-        summary = generate_summary(transcript, prompt_evolution,
-                                   old_summary=old_summary, model=args.model)
-        with open(out_path, 'w') as f:
-            f.write(summary)
-        print(f"✨ Context Map saved to: {out_path}")
-        return
+    # ── Split log into parts (for large sessions) ─────────────────────────────
+    log_parts = split_log_into_parts(raw_data, args.parts)
+    total_parts = len(log_parts)
 
-    # ── Chunked incremental processing ───────────────────────────────────────
-    chunks = chunk_segments(segments, chunk_size=args.chunk_size)
-    total_chunks = len(chunks)
-    total_prompts = len(segments)
-
-    print(f"📊 {total_prompts} prompt(s) detected → "
-          f"{total_chunks} checkpoint(s) of up to {args.chunk_size} prompts each")
+    if total_parts > 1:
+        print(f"📊 Log split into {total_parts} part(s) for processing")
 
     current_html = old_summary
 
-    for i, chunk_text in enumerate(chunks, 1):
-        start_p = (i - 1) * args.chunk_size + 1
-        end_p   = min(i * args.chunk_size, total_prompts)
-        print(f"🔄 Checkpoint {i}/{total_chunks}  "
-              f"[prompts {start_p}–{end_p} of {total_prompts}] ...")
+    for i, part in enumerate(log_parts, 1):
+        if total_parts > 1:
+            print(f"🔄 Processing part {i}/{total_parts} ...")
 
-        chunk_transcript = smart_compress_transcript(chunk_text)
-        chunk_evolution  = extract_prompt_evolution(chunk_text)
-
-        if not chunk_transcript.strip():
-            print(f"   ⚠️  Empty chunk — skipping.")
+        transcript = smart_compress_transcript(part)
+        if not transcript.strip():
+            print(f"   ⚠️  Empty part — skipping.")
             continue
 
-        # Only pass checkpoint_info when there are multiple chunks;
-        # single-chunk sessions use normal (non-checkpoint) mode.
-        cp_info = f"{i}/{total_chunks}" if total_chunks > 1 else None
+        part_info = f"{i}/{total_parts}" if total_parts > 1 else None
 
         current_html = generate_summary(
-            chunk_transcript,
-            chunk_evolution,
+            transcript,
             old_summary=current_html,
             model=args.model,
-            checkpoint_info=cp_info,
+            part_info=part_info,
         )
 
-        # Save immediately after each checkpoint — progress is never lost
+        # Save after each part — progress is never lost
         with open(out_path, 'w') as f:
             f.write(current_html)
 
-        print(f"   ✅ Checkpoint {i}/{total_chunks} saved")
+        if total_parts > 1:
+            print(f"   ✅ Part {i}/{total_parts} saved")
 
     print(f"✨ Context Map saved to: {out_path}")
 

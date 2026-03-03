@@ -34,14 +34,13 @@ Tomorrow, you'll open your terminal and ask yourself:
 
 **ContextMap** solves this. It automatically records your Claude Code sessions and generates a beautiful HTML report that reconstructs your coding journey — showing not just *what* you did, but *why* each prompt led to the next.
 
-## 🎯 Features (v1.3.2)
+## 🎯 Features (v1.4.0)
 
 ### ✨ Key Updates
-- **v1.3.2** — Increased default checkpoint batch size from 3 to 5 prompts for better session coherence.
-- **v1.3.1** — Claude now identifies unique user prompts directly from the terminal log, filtering out redraw duplicates before analysis.
-- **v1.3.0** — Introduced heuristic pre-filtering to drop empty terminal-redraw segments (foundation for v1.3.1).
+- **v1.4.0** — Deduplication and summarization merged into a single LLM call; Claude now identifies unique prompts directly from the raw transcript. Large logs can be split into N parts via `--parts N` to avoid context-length limits.
+- **v1.3.x** — Prompt deduplication: heuristic pre-filter (v1.3.0) upgraded to LLM-verified unique prompt extraction (v1.3.1); default batch size tuned (v1.3.2).
 - **v1.2.0** — Version number shown on launch; auto-updates from GitHub once per day.
-- **v1.1.1** — Checkpoint processing for long sessions; HTML saved after every batch so progress is never lost.
+- **v1.1.1** — Incremental processing for long sessions; HTML saved after each batch so progress is never lost.
 - **v1.02** — Full prompt evolution tracking across the entire session.
 
 ### Core Features
@@ -90,18 +89,12 @@ ContextMap wraps your `claude` command with an intelligent recording layer:
 │  2. 🎙️  Record session transparently                    │
 │         All interactions captured via script/pty          │
 │                                                          │
-│  3. 🔍  Deduplicate prompts (two-pass)                  │
-│         Heuristic pre-filter + LLM verification          │
-│         Drops redraw noise; keeps only unique prompts     │
+│  3. 🧠  Single LLM call per part                        │
+│         Claude identifies unique prompts from transcript  │
+│         then builds the full context map in one pass     │
+│         (use --parts N to split large logs)              │
 │                                                          │
-│  4. 🧩  Split into checkpoint chunks (every 3 prompts)  │
-│         Handles sessions of any length reliably           │
-│                                                          │
-│  5. 🧠  Analyze each chunk incrementally                │
-│         Each group of 3 prompts → LLM → append to HTML  │
-│         HTML saved after every checkpoint (never lost)   │
-│                                                          │
-│  6. 📊  Save final report                               │
+│  4. 📊  Save report                                     │
 │         .context/session_summary.html updated             │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -166,16 +159,16 @@ ContextMap uses the **`claude` CLI directly** for session analysis — the same 
 You normally don't call `contextmap.py` directly — `wrapper.py` does it for you on session exit. But you can also run it manually:
 
 ```bash
-python3 bin/contextmap.py <log_file> [--out PATH] [--chunk-size N] [--model NAME]
+python3 bin/contextmap.py <log_file> [--out PATH] [--parts N] [--model NAME]
 ```
 
 | Option | Description | Default |
 | :--- | :--- | :--- |
 | `--out PATH` | Where to write the HTML report | `.context/session_summary.html` |
-| `--chunk-size N` | Number of prompts per checkpoint batch | `10` |
+| `--parts N` | Split the log into N parts for large sessions | `1` |
 | `--model NAME` | Model name used in the session (informational only) | — |
 
-> 💡 Increase `--chunk-size` for shorter, simpler sessions. Decrease it if each prompt + response is very long.
+> 💡 Use `--parts 2` or higher only for very long sessions where the log exceeds the LLM's context window.
 
 ### File Structure
 
@@ -240,9 +233,9 @@ python3 -c "import py_compile; py_compile.compile('bin/contextmap.py', doraise=T
 - [x] Claude Code-inspired visual design
 - [x] Checkpoint mechanism for long sessions (v1.1.1)
 - [x] Version display on launch + auto-update from GitHub (v1.2.0)
-- [x] Heuristic prompt deduplication — filters terminal-redraw noise (v1.3.0)
-- [x] LLM-powered prompt deduplication — Claude identifies unique prompts directly (v1.3.1)
-- [x] Checkpoint batch size increased to 5 prompts for better coherence (v1.3.2)
+- [x] Heuristic + LLM prompt deduplication (v1.3.x)
+- [x] Single-pass LLM analysis — dedup and summarization merged into one call (v1.4.0)
+- [x] `--parts N` flag for splitting large logs across multiple LLM calls (v1.4.0)
 - [ ] Custom prompt templates
 - [ ] Multiple LLM provider support (Anthropic, Gemini, local models)
 - [ ] VS Code extension for in-editor report viewing
