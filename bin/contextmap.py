@@ -138,7 +138,7 @@ def split_transcript_by_prompts(raw_text: str) -> List[str]:
 
     return segments
 
-def chunk_segments(segments: List[str], chunk_size: int = 5) -> List[str]:
+def chunk_segments(segments: List[str], chunk_size: int = 10) -> List[str]:
     """Group prompt segments into chunks of chunk_size prompts each."""
     chunks = []
     for i in range(0, len(segments), chunk_size):
@@ -589,8 +589,8 @@ def main():
                         help="Output path for the HTML summary")
     parser.add_argument("--model", default=None,
                         help="The model used in the session (informational)")
-    parser.add_argument("--chunk-size", type=int, default=5,
-                        help="Number of prompts per checkpoint batch (default: 5)")
+    parser.add_argument("--chunk-size", type=int, default=10,
+                        help="Number of prompts per checkpoint batch (default: 10)")
     args = parser.parse_args()
 
     # ── Resolve output path (fixes crash when --out has no directory component) ──

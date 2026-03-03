@@ -172,7 +172,7 @@ python3 bin/contextmap.py <log_file> [--out PATH] [--chunk-size N] [--model NAME
 | Option | Description | Default |
 | :--- | :--- | :--- |
 | `--out PATH` | Where to write the HTML report | `.context/session_summary.html` |
-| `--chunk-size N` | Number of prompts per checkpoint batch | `5` |
+| `--chunk-size N` | Number of prompts per checkpoint batch | `10` |
 | `--model NAME` | Model name used in the session (informational only) | — |
 
 > 💡 Increase `--chunk-size` for shorter, simpler sessions. Decrease it if each prompt + response is very long.
