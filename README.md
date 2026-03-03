@@ -34,10 +34,17 @@ Tomorrow, you'll open your terminal and ask yourself:
 
 **ContextMap** solves this. It automatically records your Claude Code sessions and generates a beautiful HTML report that reconstructs your coding journey — showing not just *what* you did, but *why* each prompt led to the next.
 
-## 🎯 Features (v1.3.0)
+## 🎯 Features (v1.3.1)
 
-### ✨ Key Updates in v1.3.0
-- **Intelligent Prompt Deduplication**: PTY terminal logs frequently contain duplicate prompt lines caused by terminal redraws (screen refresh, resize, scrollback). ContextMap now filters these out automatically before analysis. A genuine prompt-response pair always has substantive content after the prompt line — redraw artifacts don't, and are silently dropped. A deduplication report is printed when noise is removed: `🔍 Deduplication: 38 raw segments → 9 unique prompts (29 duplicates removed)`.
+### ✨ Key Updates in v1.3.1
+- **LLM-Powered Prompt Deduplication**: Unique prompt extraction is now handled by Claude itself, not just a heuristic. A two-pass approach is used:
+  1. **Fast pre-filter** (no API call): segments with fewer than 3 non-empty response lines are dropped immediately — these are almost always terminal-redraw artifacts.
+  2. **LLM deduplication**: the remaining prompt texts (just the first line of each segment) are sent to Claude, which identifies any residual duplicates the heuristic missed — including character-by-character keystroke echoes, scrollback redraws with stray content, or prompts with slightly different wording but identical intent.
+  - Falls back gracefully to the heuristic result if the LLM call fails.
+  - Prints a deduplication report: `🔍 Deduplication: 65 raw segments → 3 (heuristic) → 3 unique prompts (62 duplicates removed)`.
+
+### ✨ Key Updates in v1.3.0 (superseded by v1.3.1)
+- Introduced heuristic `filter_thin_segments()` — the foundation now used as the pre-filter stage in v1.3.1.
 
 ### ✨ Key Updates in v1.2.0
 - **Version Display**: The ContextMap version number is now shown on every `claude` launch — e.g. `🦉 ContextMap v1.2.0 active.`
@@ -100,8 +107,9 @@ ContextMap wraps your `claude` command with an intelligent recording layer:
 │  2. 🎙️  Record session transparently                    │
 │         All interactions captured via script/pty          │
 │                                                          │
-│  3. 🔍  Deduplicate prompts                             │
-│         Drop terminal-redraw noise; keep unique prompts   │
+│  3. 🔍  Deduplicate prompts (two-pass)                  │
+│         Heuristic pre-filter + LLM verification          │
+│         Drops redraw noise; keeps only unique prompts     │
 │                                                          │
 │  4. 🧩  Split into checkpoint chunks (every 3 prompts)  │
 │         Handles sessions of any length reliably           │
@@ -249,7 +257,8 @@ python3 -c "import py_compile; py_compile.compile('bin/contextmap.py', doraise=T
 - [x] Claude Code-inspired visual design
 - [x] Checkpoint mechanism for long sessions (v1.1.1)
 - [x] Version display on launch + auto-update from GitHub (v1.2.0)
-- [x] Intelligent prompt deduplication — filters terminal-redraw noise (v1.3.0)
+- [x] Heuristic prompt deduplication — filters obvious terminal-redraw noise (v1.3.0)
+- [x] LLM-powered prompt deduplication — two-pass extraction for edge cases (v1.3.1)
 - [ ] Custom prompt templates
 - [ ] Multiple LLM provider support (Anthropic, Gemini, local models)
 - [ ] VS Code extension for in-editor report viewing

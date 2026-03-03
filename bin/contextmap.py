@@ -6,7 +6,7 @@ import argparse
 import datetime
 from typing import List, Dict
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 # No external dependencies required for CLI-piping mode
 
@@ -184,6 +184,102 @@ def filter_thin_segments(segments: List[str], min_response_lines: int = 3) -> Li
               f"({removed} terminal-redraw duplicates removed)")
 
     return kept
+
+
+def extract_unique_prompts_via_llm(segments: List[str]) -> List[str]:
+    """
+    Use Claude to identify genuinely unique user prompts from extracted segments.
+
+    Applies a fast heuristic pre-filter first (filter_thin_segments) to drop
+    obviously empty redraw segments without an API call, then sends the
+    remaining prompt texts to Claude for intelligent deduplication of any
+    residual duplicates.  Falls back gracefully to the heuristic result if
+    the LLM call fails for any reason.
+    """
+    if not segments:
+        return segments
+
+    # ── Step 1: cheap heuristic pre-filter (no API call) ─────────────────────
+    pre_filtered = filter_thin_segments(segments)
+    if len(pre_filtered) <= 1:
+        return pre_filtered
+
+    # ── Step 2: build a numbered list of prompt texts for Claude ─────────────
+    def get_prompt_text(seg: str) -> str:
+        first_line = seg.split('\n')[0].strip()
+        return re.sub(r'^[>\u276f\?]\s+|^(?:Human|User):\s*', '', first_line).strip() or first_line
+
+    numbered = "\n".join(
+        f"[{i}] {get_prompt_text(s)}" for i, s in enumerate(pre_filtered)
+    )
+
+    system_prompt = (
+        "You are reviewing user prompts extracted from a Claude Code terminal session log. "
+        "Terminal recordings often contain duplicate prompt lines caused by screen redraws, "
+        "scrollback buffer replays, or terminal resize events.\n\n"
+        "Your task: identify which entries are genuinely UNIQUE user prompts vs duplicates.\n\n"
+        "Rules:\n"
+        "- Mark a prompt UNIQUE if it represents a distinct user intent or action.\n"
+        "- Mark a prompt DUPLICATE if it is the same (or nearly the same) as an earlier one "
+        "— caused by terminal redraw, not a new user action.\n"
+        "- When the same text appears more than once, keep only the FIRST occurrence.\n"
+        "- Short prompts ('ok', 'continue', 'yes') are unique if they appear only once.\n\n"
+        "Respond with ONLY a JSON array of integers — the indices of the unique prompts.\n"
+        "Example: [0, 2, 5, 8]\n"
+        "No explanation. No markdown fences. Just the JSON array."
+    )
+
+    user_message = (
+        f"Below are {len(pre_filtered)} prompts extracted from a terminal session log. "
+        f"Many may still be duplicates from terminal redraws. "
+        f"Return a JSON array of the indices of UNIQUE prompts only.\n\n"
+        f"{numbered}"
+    )
+
+    real_claude = os.getenv("REAL_CLAUDE_PATH") or "claude"
+
+    import subprocess
+    import json as _json
+
+    try:
+        result = subprocess.run(
+            [real_claude, "-p", user_message, "--system-prompt", system_prompt],
+            text=True,
+            capture_output=True,
+        )
+
+        if result.returncode != 0:
+            print("⚠️  LLM prompt extraction failed — using heuristic result.")
+            return pre_filtered
+
+        raw_out = result.stdout.strip()
+
+        # Robustly parse a JSON integer array from the response
+        match = re.search(r'\[[\s\d,]+\]', raw_out)
+        if not match:
+            print("⚠️  LLM response unparseable — using heuristic result.")
+            return pre_filtered
+
+        indices = sorted(set(_json.loads(match.group())))
+        unique = [pre_filtered[i] for i in indices if 0 <= i < len(pre_filtered)]
+
+        removed_heuristic = len(segments) - len(pre_filtered)
+        removed_llm       = len(pre_filtered) - len(unique)
+        total_removed     = removed_heuristic + removed_llm
+
+        parts = [f"🔍 Deduplication: {len(segments)} raw segments"]
+        if removed_heuristic:
+            parts.append(f"→ {len(pre_filtered)} (heuristic)")
+        parts.append(f"→ {len(unique)} unique prompts")
+        if total_removed:
+            parts.append(f"({total_removed} duplicates removed)")
+        print(" ".join(parts))
+
+        return unique
+
+    except Exception as exc:
+        print(f"⚠️  LLM extraction error ({exc}) — using heuristic result.")
+        return pre_filtered
 
 
 def parse_transcript(log_path: str):
@@ -535,8 +631,8 @@ def main():
     # ── Split transcript by prompt boundaries ────────────────────────────────
     segments = split_transcript_by_prompts(raw_data)
 
-    # ── Deduplicate: drop terminal-redraw thin segments ───────────────────────
-    segments = filter_thin_segments(segments)
+    # ── Deduplicate: LLM-based unique prompt extraction ───────────────────────
+    segments = extract_unique_prompts_via_llm(segments)
 
     # ── Load any existing HTML (for multi-session merging) ───────────────────
     old_summary = ""
