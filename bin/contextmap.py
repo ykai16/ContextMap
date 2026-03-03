@@ -6,7 +6,7 @@ import argparse
 import datetime
 from typing import List, Dict
 
-__version__ = "1.3.1"
+__version__ = "1.3.2"
 
 # No external dependencies required for CLI-piping mode
 
@@ -138,13 +138,8 @@ def split_transcript_by_prompts(raw_text: str) -> List[str]:
 
     return segments
 
-def chunk_segments(segments: List[str], chunk_size: int = 3) -> List[str]:
-    """
-    Group prompt segments into chunks of chunk_size prompts each.
-
-    Returns a list of combined text strings; each string contains up to
-    chunk_size prompt+response segments joined together.
-    """
+def chunk_segments(segments: List[str], chunk_size: int = 5) -> List[str]:
+    """Group prompt segments into chunks of chunk_size prompts each."""
     chunks = []
     for i in range(0, len(segments), chunk_size):
         chunk_text = '\n\n'.join(segments[i:i + chunk_size])
@@ -594,8 +589,8 @@ def main():
                         help="Output path for the HTML summary")
     parser.add_argument("--model", default=None,
                         help="The model used in the session (informational)")
-    parser.add_argument("--chunk-size", type=int, default=3,
-                        help="Number of prompts per checkpoint batch (default: 3)")
+    parser.add_argument("--chunk-size", type=int, default=5,
+                        help="Number of prompts per checkpoint batch (default: 5)")
     args = parser.parse_args()
 
     # ── Resolve output path (fixes crash when --out has no directory component) ──

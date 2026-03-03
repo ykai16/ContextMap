@@ -34,32 +34,15 @@ Tomorrow, you'll open your terminal and ask yourself:
 
 **ContextMap** solves this. It automatically records your Claude Code sessions and generates a beautiful HTML report that reconstructs your coding journey — showing not just *what* you did, but *why* each prompt led to the next.
 
-## 🎯 Features (v1.3.1)
+## 🎯 Features (v1.3.2)
 
-### ✨ Key Updates in v1.3.1
-- **LLM-Powered Prompt Deduplication**: Unique prompt extraction is now handled by Claude itself, not just a heuristic. A two-pass approach is used:
-  1. **Fast pre-filter** (no API call): segments with fewer than 3 non-empty response lines are dropped immediately — these are almost always terminal-redraw artifacts.
-  2. **LLM deduplication**: the remaining prompt texts (just the first line of each segment) are sent to Claude, which identifies any residual duplicates the heuristic missed — including character-by-character keystroke echoes, scrollback redraws with stray content, or prompts with slightly different wording but identical intent.
-  - Falls back gracefully to the heuristic result if the LLM call fails.
-  - Prints a deduplication report: `🔍 Deduplication: 65 raw segments → 3 (heuristic) → 3 unique prompts (62 duplicates removed)`.
-
-### ✨ Key Updates in v1.3.0 (superseded by v1.3.1)
-- Introduced heuristic `filter_thin_segments()` — the foundation now used as the pre-filter stage in v1.3.1.
-
-### ✨ Key Updates in v1.2.0
-- **Version Display**: The ContextMap version number is now shown on every `claude` launch — e.g. `🦉 ContextMap v1.2.0 active.`
-- **Auto-Update**: ContextMap checks GitHub for a newer version once per day (result cached — zero overhead on subsequent launches). When a new version is found, it automatically runs `git pull` in the ContextMap directory and prompts you to restart your terminal. If the update fails (no network, no git), it silently degrades and optionally shows a manual update command.
-
-### ✨ Key Updates in v1.1.1
-- **Checkpoint Mechanism for Long Sessions**: ContextMap now splits any session into groups of 3 prompts and processes them incrementally. Each group is summarized and saved to the HTML file immediately — so even hour-long sessions with dozens of prompts are handled reliably, without hitting context-length limits or losing progress.
-  - The HTML is saved after every 3-prompt checkpoint, meaning you never lose work if something fails mid-analysis.
-  - The final report is a single cohesive document — no visible seams between checkpoints.
-  - Configurable via `--chunk-size N` (default: 3).
-- **Fixed Output Path Bug**: `--out` now works correctly with bare filenames (no directory prefix required).
-
-### ✨ Key Updates in v1.02
-- **Full Prompt Evolution Tracking**: Diagnosed and fixed an issue where only the last prompt was captured; ContextMap now explicitly extracts and sequences all your prompts so the underlying AI grasps the complete evolution of your intent.
-- **Improved Versioning**: The ContextMap version is now clearly identifiable on launch!
+### ✨ Key Updates
+- **v1.3.2** — Increased default checkpoint batch size from 3 to 5 prompts for better session coherence.
+- **v1.3.1** — Claude now identifies unique user prompts directly from the terminal log, filtering out redraw duplicates before analysis.
+- **v1.3.0** — Introduced heuristic pre-filtering to drop empty terminal-redraw segments (foundation for v1.3.1).
+- **v1.2.0** — Version number shown on launch; auto-updates from GitHub once per day.
+- **v1.1.1** — Checkpoint processing for long sessions; HTML saved after every batch so progress is never lost.
+- **v1.02** — Full prompt evolution tracking across the entire session.
 
 ### Core Features
 - 🔗 **Evolution Chain** — Tracks how prompts connect and evolve, showing the *intent* behind each transition
@@ -189,7 +172,7 @@ python3 bin/contextmap.py <log_file> [--out PATH] [--chunk-size N] [--model NAME
 | Option | Description | Default |
 | :--- | :--- | :--- |
 | `--out PATH` | Where to write the HTML report | `.context/session_summary.html` |
-| `--chunk-size N` | Number of prompts per checkpoint batch | `3` |
+| `--chunk-size N` | Number of prompts per checkpoint batch | `5` |
 | `--model NAME` | Model name used in the session (informational only) | — |
 
 > 💡 Increase `--chunk-size` for shorter, simpler sessions. Decrease it if each prompt + response is very long.
@@ -257,8 +240,9 @@ python3 -c "import py_compile; py_compile.compile('bin/contextmap.py', doraise=T
 - [x] Claude Code-inspired visual design
 - [x] Checkpoint mechanism for long sessions (v1.1.1)
 - [x] Version display on launch + auto-update from GitHub (v1.2.0)
-- [x] Heuristic prompt deduplication — filters obvious terminal-redraw noise (v1.3.0)
-- [x] LLM-powered prompt deduplication — two-pass extraction for edge cases (v1.3.1)
+- [x] Heuristic prompt deduplication — filters terminal-redraw noise (v1.3.0)
+- [x] LLM-powered prompt deduplication — Claude identifies unique prompts directly (v1.3.1)
+- [x] Checkpoint batch size increased to 5 prompts for better coherence (v1.3.2)
 - [ ] Custom prompt templates
 - [ ] Multiple LLM provider support (Anthropic, Gemini, local models)
 - [ ] VS Code extension for in-editor report viewing
