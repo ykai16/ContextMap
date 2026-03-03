@@ -205,6 +205,16 @@ def parse_transcript(log_path: str):
     except Exception as e:
         return f"[Error reading log: {str(e)}]", ""
 
+def _is_context_length_error(result: str) -> bool:
+    """Check if a generate_summary result indicates a context-length overflow."""
+    if not result.startswith("❌"):
+        return False
+    lower = result.lower()
+    return any(kw in lower for kw in [
+        "context", "too long", "too large", "token", "length",
+        "maximum", "exceed", "limit", "capacity", "input_too_long",
+    ])
+
 def generate_summary(transcript: str, old_summary: str = "", model: str = None, part_info: str = None) -> str:
     """Uses Claude Code (CLI) itself to maintain the HTML context map."""
 
@@ -517,8 +527,6 @@ def main():
                         help="Output path for the HTML summary")
     parser.add_argument("--model", default=None,
                         help="The model used in the session (informational)")
-    parser.add_argument("--parts", type=int, default=1,
-                        help="Split the log into N parts for large sessions (default: 1)")
     args = parser.parse_args()
 
     # ── Resolve output path (fixes crash when --out has no directory component) ──
@@ -565,39 +573,62 @@ def main():
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
 
-    # ── Split log into parts (for large sessions) ─────────────────────────────
-    log_parts = split_log_into_parts(raw_data, args.parts)
-    total_parts = len(log_parts)
+    # ── Process log — auto-split on context-length errors ────────────────────
+    MAX_PARTS = 8
+    n_parts = 1
 
-    if total_parts > 1:
-        print(f"📊 Log split into {total_parts} part(s) for processing")
-
-    current_html = old_summary
-
-    for i, part in enumerate(log_parts, 1):
-        if total_parts > 1:
-            print(f"🔄 Processing part {i}/{total_parts} ...")
-
-        transcript = smart_compress_transcript(part)
-        if not transcript.strip():
-            print(f"   ⚠️  Empty part — skipping.")
-            continue
-
-        part_info = f"{i}/{total_parts}" if total_parts > 1 else None
-
-        current_html = generate_summary(
-            transcript,
-            old_summary=current_html,
-            model=args.model,
-            part_info=part_info,
-        )
-
-        # Save after each part — progress is never lost
-        with open(out_path, 'w') as f:
-            f.write(current_html)
+    while True:
+        log_parts = split_log_into_parts(raw_data, n_parts)
+        total_parts = len(log_parts)
 
         if total_parts > 1:
-            print(f"   ✅ Part {i}/{total_parts} saved")
+            print(f"📊 Log split into {total_parts} part(s) for processing")
+
+        current_html = old_summary
+        context_overflow = False
+
+        for i, part in enumerate(log_parts, 1):
+            if total_parts > 1:
+                print(f"🔄 Processing part {i}/{total_parts} ...")
+
+            transcript = smart_compress_transcript(part)
+            if not transcript.strip():
+                if total_parts > 1:
+                    print(f"   ⚠️  Empty part — skipping.")
+                continue
+
+            part_info = f"{i}/{total_parts}" if total_parts > 1 else None
+
+            result = generate_summary(
+                transcript,
+                old_summary=current_html,
+                model=args.model,
+                part_info=part_info,
+            )
+
+            if _is_context_length_error(result):
+                context_overflow = True
+                break
+
+            current_html = result
+
+            # Save after each part — progress is never lost
+            with open(out_path, 'w') as f:
+                f.write(current_html)
+
+            if total_parts > 1:
+                print(f"   ✅ Part {i}/{total_parts} saved")
+
+        if not context_overflow:
+            break  # success
+
+        # Auto-retry with more parts
+        n_parts *= 2
+        if n_parts > MAX_PARTS:
+            print(f"❌ Log still too large after splitting into {MAX_PARTS} parts.")
+            return
+        print(f"⚠️  Log too large for {n_parts // 2} part(s) "
+              f"— retrying with {n_parts} parts...")
 
     print(f"✨ Context Map saved to: {out_path}")
 

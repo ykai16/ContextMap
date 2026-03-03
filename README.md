@@ -37,7 +37,7 @@ Tomorrow, you'll open your terminal and ask yourself:
 ## 🎯 Features (v1.4.0)
 
 ### ✨ Key Updates
-- **v1.4.0** — Deduplication and summarization merged into a single LLM call; Claude now identifies unique prompts directly from the raw transcript. Large logs can be split into N parts via `--parts N` to avoid context-length limits.
+- **v1.4.0** — Deduplication and summarization merged into a single LLM call; Claude now identifies unique prompts directly from the raw transcript. Auto-splits large logs on context-length errors (1 → 2 → 4 → 8 parts).
 - **v1.3.x** — Prompt deduplication: heuristic pre-filter (v1.3.0) upgraded to LLM-verified unique prompt extraction (v1.3.1); default batch size tuned (v1.3.2).
 - **v1.2.0** — Version number shown on launch; auto-updates from GitHub once per day.
 - **v1.1.1** — Incremental processing for long sessions; HTML saved after each batch so progress is never lost.
@@ -92,7 +92,7 @@ ContextMap wraps your `claude` command with an intelligent recording layer:
 │  3. 🧠  Single LLM call per part                        │
 │         Claude identifies unique prompts from transcript  │
 │         then builds the full context map in one pass     │
-│         (use --parts N to split large logs)              │
+│         (auto-splits if log exceeds context limit)       │
 │                                                          │
 │  4. 📊  Save report                                     │
 │         .context/session_summary.html updated             │
@@ -159,16 +159,15 @@ ContextMap uses the **`claude` CLI directly** for session analysis — the same 
 You normally don't call `contextmap.py` directly — `wrapper.py` does it for you on session exit. But you can also run it manually:
 
 ```bash
-python3 bin/contextmap.py <log_file> [--out PATH] [--parts N] [--model NAME]
+python3 bin/contextmap.py <log_file> [--out PATH] [--model NAME]
 ```
 
 | Option | Description | Default |
 | :--- | :--- | :--- |
 | `--out PATH` | Where to write the HTML report | `.context/session_summary.html` |
-| `--parts N` | Split the log into N parts for large sessions | `1` |
 | `--model NAME` | Model name used in the session (informational only) | — |
 
-> 💡 Use `--parts 2` or higher only for very long sessions where the log exceeds the LLM's context window.
+> 💡 If the log exceeds the model's context window, ContextMap automatically splits it into smaller parts and retries (1 → 2 → 4 → up to 8 parts). No manual configuration needed.
 
 ### File Structure
 
@@ -235,7 +234,7 @@ python3 -c "import py_compile; py_compile.compile('bin/contextmap.py', doraise=T
 - [x] Version display on launch + auto-update from GitHub (v1.2.0)
 - [x] Heuristic + LLM prompt deduplication (v1.3.x)
 - [x] Single-pass LLM analysis — dedup and summarization merged into one call (v1.4.0)
-- [x] `--parts N` flag for splitting large logs across multiple LLM calls (v1.4.0)
+- [x] Auto-split large logs on context-length errors (v1.4.0)
 - [ ] Custom prompt templates
 - [ ] Multiple LLM provider support (Anthropic, Gemini, local models)
 - [ ] VS Code extension for in-editor report viewing
